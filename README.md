@@ -1,5 +1,11 @@
 # Client Finder — Panduan Developer
 
+[![CI](https://github.com/SmittyWerbenn/client-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/SmittyWerbenn/client-finder/actions/workflows/ci.yml)
+[![Deploy GitHub Pages](https://github.com/SmittyWerbenn/client-finder/actions/workflows/pages.yml/badge.svg)](https://github.com/SmittyWerbenn/client-finder/actions/workflows/pages.yml)
+[![Demo statis](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://smittywerbenn.github.io/client-finder/)
+
+Demo statis (data contoh, tanpa server): <https://smittywerbenn.github.io/client-finder/dashboard/>
+
 Aplikasi pencarian prospek (calon klien) dari **Google Places API (New)** untuk agensi jasa
 pembuatan website. Nilai jualnya satu kalimat: *tampilkan usaha yang **belum punya website***,
 lengkap dengan nomor WhatsApp dan pitch angle siap pakai.
