@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './prototype.css';
 
 export const metadata: Metadata = {
   title: 'Client Finder — Prospek Tanpa Website',

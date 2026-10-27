@@ -1,0 +1,17 @@
+[
+  {
+    "id": "tpl-casual",
+    "name": "Template Casual",
+    "body": "Halo {{business_name}}! Saya Dewi dari ClientFinder. Saya lihat {{business_name}} di {{city}} belum punya website, jadi calon pelanggan susah cari info dan harga. {{pitch_angle}} Kalau berminat, saya kirim contoh katalog di {{catalog_url}}. Boleh saya kirim detailnya?"
+  },
+  {
+    "id": "tpl-diskon",
+    "name": "Template Penawaran Diskon",
+    "body": "Halo tim {{business_name}}! Khusus bulan ini ClientFinder kasih paket website + katalog digital diskon 30% untuk bisnis di {{city}}. {{pitch_angle}} Contoh katalog: {{catalog_url}}. Mau saya kirim penawaran lengkapnya?"
+  },
+  {
+    "id": "tpl-formal",
+    "name": "Template Profesional",
+    "body": "Selamat pagi {{business_name}}, saya Dewi dari ClientFinder. Kami membantu bisnis di {{city}} tampil lebih kredibel secara online. {{pitch_angle}} Portofolio dan katalog bisa dilihat di {{catalog_url}}. Apakah bisa dijadwalkan diskusi singkat 10 menit minggu ini?"
+  }
+]

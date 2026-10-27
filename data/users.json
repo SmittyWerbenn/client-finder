@@ -1,0 +1,22 @@
+[
+  {
+    "id": "u-free",
+    "name": "Dewi Lestari",
+    "email": "dewi@solostudio.id",
+    "company": "Solo Studio",
+    "plan": "Free",
+    "credits": 5,
+    "monthlyCredits": 5,
+    "initials": "DL"
+  },
+  {
+    "id": "u-pro",
+    "name": "Rangga Pratama",
+    "email": "rangga@nusantaradigital.id",
+    "company": "Nusantara Digital",
+    "plan": "Pro",
+    "credits": 500,
+    "monthlyCredits": 500,
+    "initials": "RP"
+  }
+]

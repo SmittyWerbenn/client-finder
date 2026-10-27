@@ -13,10 +13,12 @@ const HEADERS = [
   'No. Telepon',
   'WhatsApp (wa.me)',
   'Alamat Lengkap',
+  'Kota',
   'Rating',
   'Jumlah Ulasan',
   'Google Maps',
   'Pitch Angle / Rekomendasi Fitur Web',
+  'Status Pipeline',
 ];
 
 function escapeCell(value: string | number | null | undefined): string {
@@ -25,7 +27,7 @@ function escapeCell(value: string | number | null | undefined): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
-export function buildProspectCsv(rows: Prospect[]): string {
+export function buildProspectCsv(rows: Prospect[], statuses?: Record<string, string>): string {
   const lines = [HEADERS.map(escapeCell).join(',')];
   for (const r of rows) {
     lines.push(
@@ -36,10 +38,12 @@ export function buildProspectCsv(rows: Prospect[]): string {
         escapeCell(r.phoneDisplay ?? ''),
         escapeCell(r.whatsapp ? `https://wa.me/${r.whatsapp}` : ''),
         escapeCell(r.address),
+        escapeCell(r.city ?? ''),
         escapeCell(r.rating ?? ''),
         escapeCell(r.reviews),
         escapeCell(r.mapsUrl),
         escapeCell(r.pitch),
+        escapeCell(statuses?.[r.placeId] ?? 'New'),
       ].join(','),
     );
   }

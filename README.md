@@ -433,10 +433,10 @@ style). URL `smittywerbenn.github.io/client-finder/` otomatis 301 ke custom doma
 
 Hasilnya `out/` berisi `/`, `/login`, `/dashboard` sebagai halaman statis. Di mode ini:
 
-- pencarian memakai generator data contoh di `lib/demo.ts` (100 prospek, tanpa panggilan jaringan),
+- pencarian memakai generator data contoh `lib/mockSearch.ts` (seed di `data/mock-leads.json`, tanpa panggilan jaringan),
 - tombol **Kelola Kategori** dan **Keluar** disembunyikan,
 - export CSV dibuat di browser dari hasil yang sedang tampil,
-- badge topbar berubah menjadi "Demo statis — data contoh".
+- topbar menampilkan badge "Prototype mode" + switch **Demo / Mock** vs **Live API** (Live dinonaktifkan di build statis).
 
 Build lokal untuk menguji Pages (tanpa mengubah source permanen):
 
@@ -453,3 +453,40 @@ Jalankan `npm run build && npm start` di host yang mendukung proses Node (VPS, R
 Isi `.env.local` dari `.env.example` — minimal `GOOGLE_PLACES_API_KEY`, `AUTH_PASSWORD`,
 `SESSION_SECRET`. `data/db.json` harus persisten (volume) agar kategori tidak hilang saat redeploy.
 
+
+## 11. Lapisan prototipe (multi-user, kredit, pipeline)
+
+Prototype ini menambahkan simulasi SaaS lengkap tanpa database eksternal. Semua state demo hidup di
+`localStorage` browser, jadi bisa didemokan langsung di build statis (Pages) maupun server Node.
+
+### 11.1 File data seed
+
+| File | Isi |
+| --- | --- |
+| `data/users.json` | 2 akun demo: `u-free` (Dewi, Free, 5 kredit) dan `u-pro` (Rangga, Pro, 500 kredit) |
+| `data/templates.json` | 3 template WhatsApp: Casual, Penawaran Diskon, Profesional |
+| `data/mock-leads.json` | 15 prospek seed F&B, olahraga, konveksi, bengkel (telepon `628…`, rating, pitch, `website: null`) |
+
+### 11.2 Modul
+
+- `lib/prototype.ts` — tipe `DemoUser`/`WaTemplate`/`LeadStatus`, persistence, potong/refund kredit,
+  upgrade Pro, `fillTemplate()`, `waLink()`, `linkedInXrayUrl()`, `applyFilters()`.
+- `lib/mockSearch.ts` — generator prospek deterministik per `"<kata kunci> di <kota>"`; seed lokal dipakai
+  lebih dulu, sisanya digenerate (≈28% punya website lalu dibuang, 10% tanpa telepon).
+- `components/UserMenu.tsx` — switcher akun + badge paket + sisa kredit + tombol upgrade.
+- `components/TemplateModal.tsx` — editor template dengan placeholder `{{business_name}}`,
+  `{{city}}`, `{{pitch_angle}}`, `{{catalog_url}}` dan pratinjau langsung.
+- `components/ProspectTable.tsx` — status pipeline (warna badge), split-button Kirim WA + dropdown template,
+  tombol LinkedIn X-Ray, pagination 20 baris.
+- `components/Dashboard.tsx` — 2 tab pencarian, filter rating/ulasan/telepon, stat cards, export CSV.
+
+### 11.3 Perilaku demo
+
+- Setiap klik **Cari Prospek** memotong **1 kredit** akun aktif. Kredit habis → modal "Kuota kredit habis"
+  dengan tombol **Upgrade ke Pro (demo)** yang mengisi ulang kuota (tanpa payment gateway).
+- Status pipeline disimpan per `placeId` di `localStorage` (`clientfinder:prototype:v1`); snapshot pencarian
+  terakhir juga disimpan (`clientfinder:search:v1`) supaya tabel + status tetap ada setelah reload.
+- Export CSV mengikuti hasil yang sedang terfilter (termasuk kolom **Status Pipeline**).
+- Tombol LinkedIn membuka Google X-Ray `site:linkedin.com/in ("<nama>" OR "<kota>") ("Owner" OR "Founder" OR "Manager")`.
+- Di server (`npm run dev` / `npm start`) switch **Live API** memakai `POST /api/search`
+  (placeholder `name` → Text Search `"<nama> di <kota>"`); di build statis pilihan itu dinonaktifkan.

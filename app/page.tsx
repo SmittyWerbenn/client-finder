@@ -21,9 +21,9 @@ export default async function Home() {
           </div>
           <h1>Demo statis</h1>
           <p className="hint">
-            Halaman ini adalah build statis untuk GitHub Pages. Pencarian, filter &quot;tanpa
-            website&quot;, dan export CSV berjalan penuh di browser memakai data contoh —
-            aplikasi penuh (Places API asli, kategori, login) butuh Node server.
+            Build statis tanpa server. Dua mode pencarian (kategori &amp; kota atau nama usaha langsung),
+            filter rating/telepon/ulasan, multi-user demo dengan kuota kredit, template WhatsApp, pipeline
+            status, dan export CSV semuanya berjalan di browser memakai data contoh — tanpa API key.
           </p>
           <Link className="btn btn-primary" href="/dashboard" style={{ marginTop: 16, width: '100%' }}>
             Buka demo dashboard

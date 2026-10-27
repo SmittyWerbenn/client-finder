@@ -20,6 +20,8 @@ export type Prospect = {
   placeId: string;
   name: string;
   address: string;
+  /** Kota pencarian — dipakai untuk placeholder template WhatsApp. */
+  city?: string;
   phoneRaw: string | null;
   phoneDisplay: string | null;
   whatsapp: string | null;

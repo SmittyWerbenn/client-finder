@@ -7,7 +7,8 @@ build
 .env
 .env.local
 .env*.local
-data/*.json
+# Store runtime server (jangan di-commit). Seed demo di data/*.json tetap ikut.
+data/db.json
 data/*.tmp
 npm-debug.log*
 next-env.d.ts

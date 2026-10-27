@@ -7,6 +7,7 @@ export const maxDuration = 60;
 
 type SearchBody = {
   categoryId?: unknown;
+  name?: unknown;
   city?: unknown;
   refresh?: unknown;
 };
@@ -20,10 +21,14 @@ export async function POST(req: Request) {
   }
 
   const categoryId = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
   const city = typeof body.city === 'string' ? body.city.trim() : '';
 
-  if (!categoryId) {
-    return NextResponse.json({ ok: false, error: 'Kategori usaha wajib dipilih.' }, { status: 400 });
+  if (!categoryId && name.length < 2) {
+    return NextResponse.json({ ok: false, error: 'Pilih kategori usaha atau isi nama usaha (min. 2 karakter).' }, { status: 400 });
+  }
+  if (name.length > 80) {
+    return NextResponse.json({ ok: false, error: 'Nama usaha terlalu panjang (maks. 80 karakter).' }, { status: 400 });
   }
   if (city.length < 2) {
     return NextResponse.json({ ok: false, error: 'Kota / wilayah wajib diisi (min. 2 karakter).' }, { status: 400 });
@@ -32,7 +37,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Nama kota terlalu panjang (maks. 80 karakter).' }, { status: 400 });
   }
 
-  const category = await getCategory(categoryId);
+  let category = name ? null : await getCategory(categoryId);
+  if (name) {
+    // Pencarian langsung nama usaha: Text Search memakai nama sebagai keyword.
+    const now = new Date().toISOString();
+    category = {
+      id: `direct-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      sector: 'Pencarian Langsung',
+      subCategory: name,
+      keyword: name,
+      pitch: 'Website profil usaha + katalog produk dan tombol WhatsApp agar calon pelanggan langsung menemukan info resmi.',
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
   if (!category) {
     return NextResponse.json({ ok: false, error: 'Kategori tidak ditemukan / sudah dihapus.' }, { status: 404 });
   }
