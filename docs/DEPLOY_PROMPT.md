@@ -267,56 +267,15 @@ Uji satu pencarian kecil dari UI (ini memakai kuota Google berbayar — lakukan
 hanya setelah user menyetujui), lalu pastikan hit muncul di `/dashboard/api-usage`.
 Jangan melakukan pencarian berulang saat verifikasi.
 
-### Langkah 8 — Backup harian
-
-Buat `/usr/local/bin/clientfinder-backup.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-BACKUP_DIR=/var/backups/clientfinder
-mkdir -p "$BACKUP_DIR"
-chmod 700 "$BACKUP_DIR"
-TS=$(date +%F-%H%M)
-cd /opt/clientfinder
-docker compose exec -T db pg_dump -U clientfinder --no-owner clientfinder \
-  | gzip -9 > "$BACKUP_DIR/clientfinder-$TS.sql.gz"
-find "$BACKUP_DIR" -name 'clientfinder-*.sql.gz' -mtime +14 -delete
-```
-
-```bash
-sudo chmod 700 /usr/local/bin/clientfinder-backup.sh
-sudo /usr/local/bin/clientfinder-backup.sh
-ls -lh /var/backups/clientfinder
-```
-
-Cron `/etc/cron.d/clientfinder-backup`:
-
-```
-30 2 * * * root /usr/local/bin/clientfinder-backup.sh >> /var/log/clientfinder-backup.log 2>&1
-```
-
-Uji restore ke database sementara (jangan menimpa production):
-
-```bash
-sudo docker compose exec -T db createdb -U clientfinder clientfinder_restore_check
-gunzip -c "$(ls -t /var/backups/clientfinder/*.sql.gz | head -1)" \
-  | sudo docker compose exec -T db psql -U clientfinder -d clientfinder_restore_check
-sudo docker compose exec -T db psql -U clientfinder -d clientfinder_restore_check -c 'select count(*) from users;'
-sudo docker compose exec -T db dropdb -U clientfinder clientfinder_restore_check
-```
-
-Salin backup ke luar server (rclone/S3) bila tersedia; backup di server yang sama
-tidak melindungi dari kehilangan disk.
-
-### Langkah 9 — Operasional
+### Langkah 8 — Operasional
 
 - Log: `sudo docker compose logs -f --tail=100 app` (jangan biarkan log tumbuh
   tanpa batas; set rotasi Docker bila perlu).
-- Update: backup → `git pull --ff-only` → `docker compose up -d --build` →
-  cek health. Migrasi berjalan otomatis dan idempotent.
+- Update: `git pull --ff-only` → `docker compose up -d --build` → cek health.
+  Migrasi berjalan otomatis dan idempotent.
 - Rollback: checkout commit sebelumnya lalu build ulang. Migrasi bersifat maju;
-  bila schema berubah dan rollback tidak kompatibel, restore backup.
+  jika schema berubah dan rollback tidak kompatibel, hentikan dan minta keputusan
+  sebelum melanjutkan.
 - Jangan mengubah password Superadmin di UI selama `SEED_SUPERADMIN_*` masih
   terisi: saat restart, seed akan menyamakan password dengan nilai env. Setelah
   yakin, kosongkan **kedua** variabel seed lalu `docker compose up -d`.
@@ -330,11 +289,10 @@ Serahkan ringkas berisi:
 2. OS, versi Docker/Compose, versi PostgreSQL, dan digest image app.
 3. Status container, port yang listen, status UFW (22/80/443 saja).
 4. Penerbit + tanggal kedaluwarsa sertifikat TLS.
-5. Lokasi backup, jadwal cron, dan hasil uji restore (jumlah baris).
-6. Daftar key yang ada di `.env` **tanpa nilainya**.
-7. Email Superadmin (bukan password) dan langkah manual yang tersisa (DNS,
+5. Daftar key yang ada di `.env` **tanpa nilainya**.
+6. Email Superadmin (bukan password) dan langkah manual yang tersisa (DNS,
    Google billing, rotasi key).
-8. Jika ada langkah gagal: perintah, error asli, dan rekomendasi — jangan
+7. Jika ada langkah gagal: perintah, error asli, dan rekomendasi — jangan
    menyembunyikan kegagalan.
 
 ---
