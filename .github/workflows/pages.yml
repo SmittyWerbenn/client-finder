@@ -33,12 +33,14 @@ jobs:
       - name: Strip server-only code
         run: rm -rf app/api proxy.ts
 
+      # Custom domain (client-finder.frel.cloud) menyajikan artifact di root, jadi
+      # TANPA basePath. Domain github.io/client-finder akan 301 ke custom domain.
       - name: Build static export
         run: npm run build
         env:
           NEXT_STATIC_EXPORT: '1'
           NEXT_PUBLIC_DEMO: '1'
-          NEXT_BASE_PATH: /client-finder
+          NEXT_BASE_PATH: ''
 
       - name: Disable Jekyll
         run: touch out/.nojekyll
