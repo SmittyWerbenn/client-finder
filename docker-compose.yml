@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: clientfinder
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clientfinder_change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Isi POSTGRES_PASSWORD (min. 24 karakter, gunakan hex) di file .env}
       POSTGRES_DB: clientfinder
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -21,10 +21,11 @@ services:
       db:
         condition: service_healthy
     ports:
-      - '3000:3000'
+      # Hanya bind ke loopback; akses publik lewat reverse proxy (Caddy/Nginx).
+      - '127.0.0.1:3000:3000'
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://clientfinder:${POSTGRES_PASSWORD:-clientfinder_change_me}@db:5432/clientfinder
+      DATABASE_URL: "postgres://clientfinder:${POSTGRES_PASSWORD}@db:5432/clientfinder"
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Isi NEXTAUTH_SECRET (min. 32 karakter) di file .env}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}

@@ -197,6 +197,7 @@ static/demo sudah dihapus.
 
 - Docker: `Dockerfile` (Node 22 + migrasi otomatis sebelum start).
 - Compose: `docker-compose.yml` (app + PostgreSQL + volume).
+- Panduan langkah demi langkah untuk agent/VPS: [`docs/DEPLOY_PROMPT.md`](docs/DEPLOY_PROMPT.md).
 - Reverse proxy (Nginx/Caddy) → port 3000, set `X-Forwarded-Proto: https`.
 - Health check: `GET /api/health`.
 - Migrasi manual: `DATABASE_URL=… npm run db:migrate` (idempotent).
