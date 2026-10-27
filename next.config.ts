@@ -1,23 +1,31 @@
 import type { NextConfig } from 'next';
 
-// Dua mode build:
-// - normal  : Node server (API routes, cookie sesi, JSON store) — `npm run build`
-// - statis  : GitHub Pages — `NEXT_STATIC_EXPORT=1 NEXT_PUBLIC_DEMO=1`
-//             (folder app/api + proxy.ts dibuang lebih dulu oleh workflow)
-const isStaticExport = process.env.NEXT_STATIC_EXPORT === '1';
-const basePath = process.env.NEXT_BASE_PATH?.replace(/\/+$/, '') || '';
-
+/**
+ * Aplikasi production berjalan di Node runtime (route handler, cookie sesi,
+ * database). Tidak ada lagi mode static export untuk GitHub Pages.
+ */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  ...(isStaticExport
-    ? {
-        output: 'export' as const,
-        trailingSlash: true,
-        images: { unoptimized: true },
-      }
-    : {}),
-  ...(basePath ? { basePath, assetPrefix: basePath } : {}),
+  serverExternalPackages: ['pg'],
+  // File SQL migrasi dibaca saat runtime (bootstrap database) — pastikan ikut
+  // ter-trace saat build production/Docker.
+  outputFileTracingIncludes: {
+    '/*': ['./drizzle/sqlite/*.sql', './drizzle/postgres/*.sql'],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

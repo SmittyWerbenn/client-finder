@@ -7,9 +7,14 @@ build
 .env
 .env.local
 .env*.local
-# Store runtime server (jangan di-commit). Seed demo di data/*.json tetap ikut.
-data/db.json
+# Database runtime (SQLite/Turso local) — jangan di-commit.
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
 data/*.tmp
+data/db.json
 npm-debug.log*
 next-env.d.ts
 *.tsbuildinfo
+coverage

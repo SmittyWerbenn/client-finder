@@ -1,78 +1,48 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'node:crypto';
-import { SESSION_COOKIE, createSessionToken, requestUsesHttps, sessionCookieOptions } from '@/lib/auth';
+import { findUserByEmail } from '@/lib/repositories/users';
+import { verifyPassword } from '@/lib/password';
+import { apiOk, runApi } from '@/lib/http';
+import { HttpError } from '@/lib/errors';
+import { loginSchema } from '@/lib/validation';
+import { clientIp, consumeRateLimit, resetRateLimit } from '@/lib/rate-limit';
+import { SESSION_COOKIE, createSessionToken, requestUsesHttps, sessionCookieOptions } from '@/lib/session';
 
-type Attempt = { count: number; first: number };
-const globalRef = globalThis as unknown as { __clientFinderLoginAttempts?: Map<string, Attempt> };
-const attempts = globalRef.__clientFinderLoginAttempts ?? new Map<string, Attempt>();
-globalRef.__clientFinderLoginAttempts = attempts;
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_ATTEMPTS = 8;
-
-function clientIp(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'local';
-}
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || now - entry.first > WINDOW_MS) {
-    attempts.set(ip, { count: 1, first: now });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > MAX_ATTEMPTS;
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a, 'utf8');
-  const bufB = Buffer.from(b, 'utf8');
-  if (bufA.length !== bufB.length) {
-    // Tetap jalankan perbandingan agar durasi tidak membocorkan panjang password.
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
-}
-
+/** Login email + password. Rate limit 8 percobaan / 10 menit per IP + email. */
 export async function POST(req: Request) {
-  const ip = clientIp(req);
-  if (rateLimited(ip)) {
-    return NextResponse.json(
-      { ok: false, error: 'Terlalu banyak percobaan login. Coba lagi dalam 10 menit.' },
-      { status: 429 },
-    );
-  }
+  return runApi(async () => {
+    const input = loginSchema.parse(await req.json());
+    const key = `login:${clientIp(req)}:${input.email}`;
 
-  const expected = process.env.APP_ADMIN_PASSWORD?.trim();
-  if (!expected) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'APP_ADMIN_PASSWORD belum diset di .env.local. Salin dari .env.example lalu restart server.',
-      },
-      { status: 500 },
-    );
-  }
+    if (!consumeRateLimit(key, 8, 10 * 60 * 1000)) {
+      throw new HttpError(429, 'TOO_MANY_ATTEMPTS', 'Terlalu banyak percobaan login. Coba lagi dalam 10 menit.');
+    }
 
-  let password = '';
-  try {
-    const body = (await req.json()) as { password?: unknown };
-    password = typeof body.password === 'string' ? body.password : '';
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Body request tidak valid.' }, { status: 400 });
-  }
+    const user = await findUserByEmail(input.email);
+    const passwordOk = user ? await verifyPassword(input.password, user.passwordHash) : false;
 
-  if (!password || !safeEqual(password, expected)) {
-    return NextResponse.json({ ok: false, error: 'Password salah. Silakan coba lagi.' }, { status: 401 });
-  }
+    if (!user || !passwordOk) {
+      throw new HttpError(401, 'INVALID_CREDENTIALS', 'Email atau password salah.');
+    }
+    if (!user.isActive) {
+      throw new HttpError(403, 'ACCOUNT_DISABLED', 'Akun ini dinonaktifkan. Hubungi Superadmin.');
+    }
 
-  attempts.delete(ip);
-  const token = await createSessionToken();
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(requestUsesHttps(req)));
-  return res;
+    resetRateLimit(key);
+    const token = await createSessionToken({
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      ver: user.sessionVersion,
+    });
+
+    const response = apiOk({
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    }) as NextResponse;
+    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(requestUsesHttps(req)));
+    return response;
+  });
 }

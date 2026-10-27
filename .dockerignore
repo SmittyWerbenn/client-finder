@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/*.tmp
+data/db.json
+.env
+.env.local
+.env*.local
+*.log
+.git
+.gitignore
+README.md

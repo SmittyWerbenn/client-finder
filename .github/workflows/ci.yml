@@ -22,18 +22,33 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Build (mode server)
+      - name: Build
         run: npm run build
 
-  static-demo:
-    name: Build demo statis (GitHub Pages)
+  migrate-postgres:
+    name: Migrasi PostgreSQL
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clientfinder
+          POSTGRES_PASSWORD: clientfinder_ci
+          POSTGRES_DB: clientfinder
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clientfinder"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://clientfinder:clientfinder_ci@localhost:5432/clientfinder
     steps:
       - uses: actions/checkout@v4
 
@@ -44,13 +59,7 @@ jobs:
 
       - run: npm ci
 
-      # Pages hanya menyajikan file statis: route handler + proxy dibuang.
-      - name: Strip server-only code
-        run: rm -rf app/api proxy.ts
-
-      - name: Build static export
-        run: npm run build
-        env:
-          NEXT_STATIC_EXPORT: '1'
-          NEXT_PUBLIC_DEMO: '1'
-          NEXT_BASE_PATH: /client-finder
+      - name: Jalankan migrasi (idempotent, 2x)
+        run: |
+          npm run db:migrate
+          npm run db:migrate

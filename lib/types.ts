@@ -1,19 +1,18 @@
+import type { LeadStatus, Role } from './db/schema';
+
+export type { LeadStatus, Role };
+
 export type Category = {
   id: string;
+  ownerId: string | null;
+  ownerName?: string | null;
   sector: string;
   subCategory: string;
   keyword: string;
   pitch: string;
-  isDefault: boolean;
+  isGlobal: boolean;
   createdAt: string;
   updatedAt: string;
-};
-
-export type CategoryInput = {
-  sector: string;
-  subCategory: string;
-  keyword: string;
-  pitch: string;
 };
 
 export type Prospect = {
@@ -34,34 +33,83 @@ export type Prospect = {
   pitch: string;
 };
 
+export type Lead = Prospect & {
+  id: string;
+  ownerId: string;
+  ownerName?: string;
+  status: LeadStatus;
+  source: 'SEARCH' | 'MANUAL';
+};
+
 export type SearchMeta = {
   sector: string;
   subCategory: string;
   keyword: string;
   pitch: string;
   city: string;
-  /** Query Text Search aktual: `"<keyword> di <kota>"`. */
   query: string;
-  /** Plafon keras prospek tanpa website per pencarian (100). */
   limit: number;
-  /** Jumlah tempat mentah yang dipindai dari Google. */
   scanned: number;
   skippedWithWebsite: number;
   totalQualified: number;
   pagesScanned: number;
-  /** true bila loop berhenti karena plafon `limit` tercapai. */
   capped: boolean;
-  mock: boolean;
+  /** Jumlah panggilan Place Details untuk melengkapi nomor telepon. */
+  detailsCalls: number;
 };
 
 export type SearchResponse = {
-  ok: true;
+  leads: Lead[];
   meta: SearchMeta;
-  results: Prospect[];
+  usage: UsageSnapshot;
 };
 
-export type ApiError = {
-  ok: false;
-  error: string;
-  code?: string;
+export type PublicUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  isActive: boolean;
+  createdAt: string;
+  leads?: number;
+};
+
+export type UsageSnapshot = {
+  period: string;
+  userHits: number;
+  userLimit: number;
+  globalHits: number;
+  globalLimit: number;
+};
+
+export type UsageLogEntry = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  endpoint: 'TEXT_SEARCH' | 'PLACE_DETAILS';
+  queryParam: string;
+  status: 'SUCCESS' | 'ERROR';
+  httpStatus: number | null;
+  placeId: string | null;
+  durationMs: number;
+  createdAt: string;
+};
+
+export type UsagePerUser = {
+  userId: string;
+  name: string;
+  email: string;
+  role: Role;
+  hits: number;
+};
+
+export type UsageOverview = {
+  period: string;
+  globalHits: number;
+  globalLimit: number;
+  perUser: UsagePerUser[];
+  daily: Array<{ date: string; hits: number }>;
+  logs: UsageLogEntry[];
+  totalUsers: number;
 };

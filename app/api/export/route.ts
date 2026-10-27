@@ -1,66 +1,62 @@
-import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requireUser } from '@/lib/auth';
+import { apiOk, runApi } from '@/lib/http';
+import { getLeadsByIds, listLeads } from '@/lib/repositories/leads';
+import { leadStatusSchema } from '@/lib/validation';
 import { buildProspectCsv, csvFileName } from '@/lib/csv';
-import { normalizePhone } from '@/lib/phone';
-import type { Prospect } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-type ExportBody = { rows?: unknown; sector?: unknown; city?: unknown };
+const exportSchema = z.object({
+  ids: z.array(z.string().trim().min(1)).min(1, 'Tidak ada prospek untuk diexport.').max(1000),
+  city: z.string().trim().max(80).optional(),
+});
 
-function sanitizeRows(input: unknown): Prospect[] {
-  if (!Array.isArray(input)) return [];
-  return input.slice(0, 2000).map((item) => {
-    const row = (item ?? {}) as Record<string, unknown>;
-    const phone = normalizePhone(
-      typeof row.phoneRaw === 'string'
-        ? row.phoneRaw
-        : typeof row.phoneDisplay === 'string'
-          ? row.phoneDisplay
-          : null,
-    );
-    return {
-      placeId: String(row.placeId ?? ''),
-      name: String(row.name ?? ''),
-      address: String(row.address ?? ''),
-      phoneRaw: typeof row.phoneRaw === 'string' ? row.phoneRaw : null,
-      phoneDisplay: phone?.display ?? (typeof row.phoneDisplay === 'string' ? row.phoneDisplay : null),
-      whatsapp: phone?.wa ?? (typeof row.whatsapp === 'string' ? row.whatsapp : null),
-      website: typeof row.website === 'string' ? row.website : null,
-      rating: typeof row.rating === 'number' ? row.rating : null,
-      reviews: typeof row.reviews === 'number' ? row.reviews : 0,
-      mapsUrl: String(row.mapsUrl ?? ''),
-      sector: String(row.sector ?? ''),
-      subCategory: String(row.subCategory ?? ''),
-      pitch: String(row.pitch ?? ''),
-    } satisfies Prospect;
+/** POST /api/export — CSV dibuat server-side dari id lead sesuai scope role. */
+export async function POST(req: Request) {
+  return runApi(async () => {
+    const user = await requireUser();
+    const input = exportSchema.parse(await req.json());
+    const leads = await getLeadsByIds(user, input.ids);
+
+    if (leads.length === 0) {
+      return apiOk({ csv: '', fileName: '' });
+    }
+
+    const statuses = Object.fromEntries(leads.map((lead) => [lead.placeId, lead.status]));
+    const csv = buildProspectCsv(leads, statuses);
+    const fileName = csvFileName(leads[0]?.sector, input.city ?? leads[0]?.city);
+
+    return apiOk({ csv, fileName });
   });
 }
 
-export async function POST(req: Request) {
-  let body: ExportBody;
-  try {
-    body = (await req.json()) as ExportBody;
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Body request tidak valid.' }, { status: 400 });
-  }
+const querySchema = z.object({
+  status: leadStatusSchema.optional(),
+  q: z.string().trim().max(80).optional(),
+});
 
-  const rows = sanitizeRows(body.rows);
-  if (rows.length === 0) {
-    return NextResponse.json({ ok: false, error: 'Tidak ada data prospek untuk diexport.' }, { status: 400 });
-  }
+/** GET /api/export?status=… — unduh langsung (dipakai halaman Leads). */
+export async function GET(req: Request) {
+  return runApi(async () => {
+    const user = await requireUser();
+    const url = new URL(req.url);
+    const query = querySchema.parse({
+      status: url.searchParams.get('status') ?? undefined,
+      q: url.searchParams.get('q') ?? undefined,
+    });
+    const leads = await listLeads(user, { ...query, limit: 1000 });
+    const statuses = Object.fromEntries(leads.map((lead) => [lead.placeId, lead.status]));
+    const csv = buildProspectCsv(leads, statuses);
+    const fileName = csvFileName(leads[0]?.sector, leads[0]?.city);
 
-  const csv = buildProspectCsv(rows);
-  const filename = csvFileName(
-    typeof body.sector === 'string' ? body.sector : undefined,
-    typeof body.city === 'string' ? body.city : undefined,
-  );
-
-  return new NextResponse(csv, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
+    return new Response(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
   });
 }

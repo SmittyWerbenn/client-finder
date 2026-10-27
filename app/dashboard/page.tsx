@@ -1,24 +1,35 @@
-import Link from 'next/link';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import Dashboard from '@/components/Dashboard';
-import { demoCategories, DEMO } from '@/lib/demo';
-import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
-import { listCategories } from '@/lib/db';
+import SearchWorkspace from '@/components/SearchWorkspace';
+import { getSessionUser } from '@/lib/auth';
+import { listCategoriesFor } from '@/lib/repositories/categories';
+import { listLeads } from '@/lib/repositories/leads';
+import { getUsageSnapshot } from '@/lib/api-tracker';
+import { DEFAULT_TEMPLATES } from '@/lib/outreach';
 
-// Mode normal dinamis (cookie sesi + DB), mode statis tidak.
+export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
-  if (DEMO) {
-    // Build statis GitHub Pages: tidak ada sesi & DB, kategori dari seed.
-    return <Dashboard initialCategories={demoCategories()} mockMode />;
-  }
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ denied?: string }>;
+}) {
+  const user = await getSessionUser();
+  if (!user) redirect('/login');
 
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!(await verifySessionToken(token))) redirect('/login');
+  const [categories, leads, usage] = await Promise.all([
+    listCategoriesFor(user),
+    listLeads(user, { limit: 200 }),
+    getUsageSnapshot(user.id, user.role),
+  ]);
 
-  const categories = await listCategories();
-  const mockMode = !process.env.GOOGLE_PLACES_API_KEY?.trim();
-
-  return <Dashboard initialCategories={categories} mockMode={mockMode} />;
+  return (
+    <SearchWorkspace
+      user={user}
+      initialCategories={categories}
+      initialLeads={leads}
+      initialUsage={usage}
+      templates={DEFAULT_TEMPLATES}
+      denied={(await searchParams).denied === '1'}
+    />
+  );
 }

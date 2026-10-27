@@ -1,10 +1,15 @@
-import { NextResponse } from 'next/server';
-import { listCategories, resetCategoriesToDefault } from '@/lib/db';
+import { requireRole } from '@/lib/auth';
+import { apiOk, runApi } from '@/lib/http';
+import { listCategoriesFor, restoreGlobalCategories } from '@/lib/repositories/categories';
 
 export const dynamic = 'force-dynamic';
 
+/** Superadmin: pulihkan katalog kategori global yang hilang. */
 export async function POST() {
-  await resetCategoriesToDefault();
-  const categories = await listCategories();
-  return NextResponse.json({ ok: true, categories });
+  return runApi(async () => {
+    const user = await requireRole('SUPERADMIN');
+    await restoreGlobalCategories();
+    const categories = await listCategoriesFor(user);
+    return apiOk({ categories });
+  });
 }

@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Prospect } from './types';
-import { normalizeWaPhone, waLink, type WaTemplate } from './prototype';
+import type { Lead } from './types';
+import { normalizeWaPhone, waLink, type WaTemplate } from './outreach';
 
 export type BroadcastPhase = 'idle' | 'running' | 'paused' | 'done' | 'stopped';
 
@@ -17,13 +17,13 @@ export type BroadcastSnapshot = {
 };
 
 export type BroadcastStartInput = {
-  leads: Prospect[];
+  leads: Lead[];
   template: WaTemplate;
   delaySec: number;
   city: string;
 };
 
-type QueueItem = { lead: Prospect; url: string };
+type QueueItem = { lead: Lead; url: string };
 
 const INITIAL: BroadcastSnapshot = {
   phase: 'idle',
@@ -43,7 +43,7 @@ const INITIAL: BroadcastSnapshot = {
  * `window.open` — pop-up blocker browser bisa memblokir tab ke-2 dan
  * seterusnya, sehingga jumlah tab yang gagal dihitung di `blocked`.
  */
-export function useMassBroadcastQueue(handlers: { onSent?: (lead: Prospect) => void } = {}) {
+export function useMassBroadcastQueue(handlers: { onSent?: (lead: Lead) => void } = {}) {
   const [snapshot, setSnapshot] = useState<BroadcastSnapshot>(INITIAL);
 
   const onSentRef = useRef(handlers.onSent);

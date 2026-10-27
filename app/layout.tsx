@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import './prototype.css';
+import './workspace.css';
 
 export const metadata: Metadata = {
-  title: 'Client Finder — Prospek Tanpa Website',
+  title: 'ClientFinder — Prospect Engine',
   description:
-    'Cari calon klien UMKM dari Google Places yang belum punya website. Filter otomatis, pitch angle siap pakai, export CSV.',
+    'Temukan bisnis lokal tanpa website dari Google Places, kelola pipeline lead, dan audit pemakaian API dalam satu platform.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

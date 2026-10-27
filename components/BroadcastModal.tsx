@@ -1,14 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Prospect } from '@/lib/types';
-import {
-  fillTemplate,
-  normalizeWaPhone,
-  templateContextFor,
-  type LeadStatus,
-  type WaTemplate,
-} from '@/lib/prototype';
+import type { Lead, LeadStatus } from '@/lib/types';
+import { fillTemplate, normalizeWaPhone, templateContextFor, type WaTemplate } from '@/lib/outreach';
 import { useMassBroadcastQueue } from '@/lib/useMassBroadcastQueue';
 
 const DELAY_OPTIONS = [3, 5, 10];
@@ -26,16 +20,14 @@ export default function BroadcastModal({
   rows,
   city,
   templates,
-  statuses,
   onStatusChange,
   onClose,
   notify,
 }: {
-  rows: Prospect[];
+  rows: Lead[];
   city: string;
   templates: WaTemplate[];
-  statuses: Record<string, LeadStatus>;
-  onStatusChange: (placeId: string, status: LeadStatus, silent?: boolean) => void;
+  onStatusChange: (id: string, status: LeadStatus, silent?: boolean) => void;
   onClose: () => void;
   notify: (message: string, isError?: boolean) => void;
 }) {
@@ -43,7 +35,7 @@ export default function BroadcastModal({
   const [delaySec, setDelaySec] = useState(5);
 
   const { snapshot, start, pause, resume, stop, reset } = useMassBroadcastQueue({
-    onSent: (lead) => onStatusChange(lead.placeId, 'Contacted', true),
+    onSent: (lead) => onStatusChange(lead.id, 'Contacted', true),
   });
 
   const recipients = useMemo(
@@ -52,8 +44,8 @@ export default function BroadcastModal({
   );
   const skipped = rows.length - recipients.length;
   const alreadyContacted = useMemo(
-    () => recipients.filter((lead) => (statuses[lead.placeId] ?? 'New') === 'Contacted').length,
-    [recipients, statuses],
+    () => recipients.filter((lead) => lead.status === 'Contacted').length,
+    [recipients],
   );
 
   const template = templates.find((item) => item.id === templateId) ?? templates[0] ?? null;

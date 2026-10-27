@@ -1,77 +1,58 @@
-import { NextResponse } from 'next/server';
-import { getCategory } from '@/lib/db';
-import { PlacesError, searchProspects } from '@/lib/places';
+import { requireUser } from '@/lib/auth';
+import { apiOk, runApi } from '@/lib/http';
+import { searchSchema } from '@/lib/validation';
+import { getCategoryFor } from '@/lib/repositories/categories';
+import { searchProspects, type SearchCategoryInput } from '@/lib/places';
+import { saveSearchLeads } from '@/lib/repositories/leads';
+import { assertQuota, getUsageSnapshot } from '@/lib/api-tracker';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 120;
+export const runtime = 'nodejs';
 
-type SearchBody = {
-  categoryId?: unknown;
-  name?: unknown;
-  city?: unknown;
-  refresh?: unknown;
-};
+const DIRECT_PITCH =
+  'Website profil usaha + katalog produk dan tombol WhatsApp agar calon pelanggan langsung menemukan informasi resmi.';
 
+/**
+ * POST /api/search
+ * Pipeline: auth → validasi → cek kuota → Google Places → filter website →
+ * normalisasi WhatsApp → simpan lead (scoped user) → payload bersih.
+ */
 export async function POST(req: Request) {
-  let body: SearchBody;
-  try {
-    body = (await req.json()) as SearchBody;
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Body request tidak valid (harus JSON).' }, { status: 400 });
-  }
+  return runApi(async () => {
+    const user = await requireUser();
+    const input = searchSchema.parse(await req.json());
 
-  const categoryId = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
-  const city = typeof body.city === 'string' ? body.city.trim() : '';
+    let category: SearchCategoryInput;
+    if (input.mode === 'name') {
+      const name = (input.name ?? '').trim();
+      category = {
+        sector: 'Pencarian Langsung',
+        subCategory: name,
+        keyword: name,
+        pitch: DIRECT_PITCH,
+      };
+    } else {
+      const stored = await getCategoryFor(user, input.categoryId ?? '');
+      category = {
+        sector: stored.sector,
+        subCategory: stored.subCategory,
+        keyword: stored.keyword,
+        pitch: stored.pitch,
+      };
+    }
 
-  if (!categoryId && name.length < 2) {
-    return NextResponse.json({ ok: false, error: 'Pilih kategori usaha atau isi nama usaha (min. 2 karakter).' }, { status: 400 });
-  }
-  if (name.length > 80) {
-    return NextResponse.json({ ok: false, error: 'Nama usaha terlalu panjang (maks. 80 karakter).' }, { status: 400 });
-  }
-  if (city.length < 2) {
-    return NextResponse.json({ ok: false, error: 'Kota / wilayah wajib diisi (min. 2 karakter).' }, { status: 400 });
-  }
-  if (city.length > 80) {
-    return NextResponse.json({ ok: false, error: 'Nama kota terlalu panjang (maks. 80 karakter).' }, { status: 400 });
-  }
+    await assertQuota(user.id, user.role);
 
-  let category = name ? null : await getCategory(categoryId);
-  if (name) {
-    // Pencarian langsung nama usaha: Text Search memakai nama sebagai keyword.
-    const now = new Date().toISOString();
-    category = {
-      id: `direct-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      sector: 'Pencarian Langsung',
-      subCategory: name,
-      keyword: name,
-      pitch: 'Website profil usaha + katalog produk dan tombol WhatsApp agar calon pelanggan langsung menemukan info resmi.',
-      isDefault: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-  }
-  if (!category) {
-    return NextResponse.json({ ok: false, error: 'Kategori tidak ditemukan / sudah dihapus.' }, { status: 404 });
-  }
-
-  try {
-    const { results, meta } = await searchProspects({
+    const { prospects, meta } = await searchProspects({
+      userId: user.id,
       category,
-      city,
-      refresh: body.refresh === true,
+      city: input.city,
     });
 
-    return NextResponse.json({ ok: true, meta, results });
-  } catch (err) {
-    if (err instanceof PlacesError) {
-      return NextResponse.json({ ok: false, error: err.message, code: 'PLACES_API_ERROR' }, { status: err.status });
-    }
-    console.error('[search:POST]', err);
-    return NextResponse.json(
-      { ok: false, error: 'Terjadi kesalahan di server saat mengambil data prospek.' },
-      { status: 500 },
-    );
-  }
+    const leads = await saveSearchLeads(user.id, meta.city, prospects);
+    const usage = await getUsageSnapshot(user.id, user.role);
+
+    return apiOk({ leads, meta, usage });
+  });
 }

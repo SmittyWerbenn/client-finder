@@ -1,26 +1,24 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Prospect } from '@/lib/types';
+import type { Lead, LeadStatus } from '@/lib/types';
 import BroadcastModal from './BroadcastModal';
 import {
   LEAD_STATUSES,
   linkedInXrayUrl,
   normalizeWaPhone,
   waLink,
-  type LeadStatus,
   type WaTemplate,
-} from '@/lib/prototype';
+} from '@/lib/outreach';
 
 const PAGE_SIZE = 20;
 
 export default function ProspectTable({
   rows,
+  totalCount,
   city,
-  statuses,
   templates,
   counts,
-  totalCount,
   statusFilter,
   onStatusFilter,
   onStatusChange,
@@ -29,15 +27,14 @@ export default function ProspectTable({
   loading,
   note,
 }: {
-  rows: Prospect[];
+  rows: Lead[];
+  totalCount: number;
   city: string;
-  statuses: Record<string, LeadStatus>;
   templates: WaTemplate[];
   counts: Record<LeadStatus | 'all', number>;
-  totalCount: number;
   statusFilter: LeadStatus | 'all';
   onStatusFilter: (value: LeadStatus | 'all') => void;
-  onStatusChange: (placeId: string, status: LeadStatus, silent?: boolean) => void;
+  onStatusChange: (id: string, status: LeadStatus, silent?: boolean) => void;
   onExport: () => void;
   notify: (message: string, isError?: boolean) => void;
   loading?: boolean;
@@ -76,7 +73,7 @@ export default function ProspectTable({
     };
   }, [openMenu]);
 
-  function sendWa(lead: Prospect, template: WaTemplate) {
+  function sendWa(lead: Lead, template: WaTemplate) {
     const url = waLink(lead, template.body, city || lead.city || '');
     setOpenMenu(null);
     if (!url) return;
@@ -124,7 +121,7 @@ export default function ProspectTable({
                 : 'Kirim template WA ke semua kontak di tabel secara berurutan'
             }
           >
-            🚀 Broadcast WhatsApp Semua ({broadcastCount} Kontak)
+            Broadcast WhatsApp Semua ({broadcastCount} Kontak)
           </button>
           <button type="button" className="btn btn-sm btn-navy export-btn" onClick={onExport} disabled={rows.length === 0}>
             Export CSV
@@ -151,7 +148,7 @@ export default function ProspectTable({
           <div className="icon">⌕</div>
           <h3>Belum ada prospek yang cocok</h3>
           <p>
-            Coba longgarkan filter rating/ulasan, matikan filter nomor telepon, atau ganti kota. Filter
+            Jalankan pencarian baru, longgarkan filter rating/ulasan, atau matikan filter nomor telepon. Filter
             &quot;tanpa website&quot; selalu aktif.
           </p>
         </div>
@@ -172,10 +169,9 @@ export default function ProspectTable({
               </thead>
               <tbody>
                 {pageRows.map((row) => {
-                  const status = statuses[row.placeId] ?? 'New';
                   const phone = normalizeWaPhone(row.whatsapp ?? row.phoneRaw);
                   return (
-                    <tr key={row.placeId}>
+                    <tr key={row.id}>
                       <td data-label="Bisnis">
                         <div className="biz-name">{row.name}</div>
                         <div className="addr">
@@ -222,9 +218,9 @@ export default function ProspectTable({
                       </td>
                       <td data-label="Status">
                         <select
-                          className={`status-select st-${status.toLowerCase()}`}
-                          value={status}
-                          onChange={(event) => onStatusChange(row.placeId, event.target.value as LeadStatus)}
+                          className={`status-select st-${row.status.toLowerCase()}`}
+                          value={row.status}
+                          onChange={(event) => onStatusChange(row.id, event.target.value as LeadStatus)}
                           aria-label={`Status pipeline ${row.name}`}
                         >
                           {LEAD_STATUSES.map((option) => (
@@ -236,7 +232,7 @@ export default function ProspectTable({
                       </td>
                       <td data-label="Aksi">
                         <div className="row-actions">
-                          <div className="wa-split" ref={openMenu === row.placeId ? menuRef : undefined}>
+                          <div className="wa-split" ref={openMenu === row.id ? menuRef : undefined}>
                             <button
                               type="button"
                               className="btn btn-sm btn-wa"
@@ -250,13 +246,13 @@ export default function ProspectTable({
                               type="button"
                               className="btn btn-sm btn-wa caret"
                               disabled={!phone || templates.length === 0}
-                              onClick={() => setOpenMenu((current) => (current === row.placeId ? null : row.placeId))}
+                              onClick={() => setOpenMenu((current) => (current === row.id ? null : row.id))}
                               aria-label={`Pilih template WhatsApp untuk ${row.name}`}
-                              aria-expanded={openMenu === row.placeId}
+                              aria-expanded={openMenu === row.id}
                             >
                               ▾
                             </button>
-                            {openMenu === row.placeId ? (
+                            {openMenu === row.id ? (
                               <div className="wa-menu" role="menu">
                                 {templates.map((template) => (
                                   <button
@@ -324,7 +320,6 @@ export default function ProspectTable({
           rows={rows}
           city={city}
           templates={templates}
-          statuses={statuses}
           onStatusChange={onStatusChange}
           onClose={() => setShowBroadcast(false)}
           notify={notify}

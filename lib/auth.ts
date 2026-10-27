@@ -1,67 +1,60 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
+import { getDatabase, normalizeBool, normalizeNumber } from './db';
+import type { Role } from './db/schema';
+import { HttpError } from './errors';
+import { SESSION_COOKIE, verifySessionToken } from './session';
+
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+};
+
+export { ROLE_LABELS, isAdmin, canManageUsers } from './roles';
 
 /**
- * Session = JWT HS256 di cookie httpOnly.
- * Hanya berisi { sub: 'admin' } — tidak ada data sensitif di client.
+ * Baca sesi dari cookie lalu verifikasi ulang ke database (role & status
+ * aktif terbaru). Jika user dinonaktifkan/diubah role, sesi lama tidak lagi
+ * memberi hak akses.
  */
+export async function getSessionUser(): Promise<SessionUser | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  const claims = await verifySessionToken(token);
+  if (!claims) return null;
 
-export const SESSION_COOKIE = 'cf_session';
-
-const FALLBACK_SECRET = 'client-finder-dev-secret-change-me-min-32-chars';
-
-export const SESSION_TTL_HOURS = (() => {
-  const raw = Number(process.env.SESSION_TTL_HOURS);
-  if (Number.isFinite(raw) && raw > 0 && raw <= 24 * 30) return raw;
-  return 12;
-})();
-
-function secretKey(): Uint8Array {
-  const secret = process.env.SESSION_SECRET?.trim() || FALLBACK_SECRET;
-  return new TextEncoder().encode(secret);
-}
-
-export async function createSessionToken(): Promise<string> {
-  return new SignJWT({ role: 'admin' })
-    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-    .setSubject('admin')
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_TTL_HOURS}h`)
-    .sign(secretKey());
-}
-
-export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
-  if (!token) return false;
-  try {
-    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ['HS256'] });
-    return payload.role === 'admin' && payload.sub === 'admin';
-  } catch {
-    return false;
-  }
-}
-
-/**
- * `secure` mengikuti protokol request sebenarnya: kalau aplikasi diakses lewat
- * http (mis. LAN `http://192.168.1.5:3000`), cookie Secure akan ditolak browser
- * dan login tampak "berhasil" tapi selalu balik ke halaman login.
- */
-export function sessionCookieOptions(secure = false) {
+  const db = await getDatabase();
+  const row = await db.one<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    is_active: unknown;
+    session_version: unknown;
+  }>(
+    'SELECT id, email, name, role, is_active, session_version FROM users WHERE id = ? AND is_active = TRUE',
+    [claims.sub],
+  );
+  if (!row || !normalizeBool(row.is_active)) return null;
+  if (normalizeNumber(row.session_version) !== claims.ver) return null;
   return {
-    httpOnly: true,
-    sameSite: 'lax' as const,
-    secure,
-    path: '/',
-    maxAge: Math.floor(SESSION_TTL_HOURS * 3600),
+    id: String(row.id),
+    email: String(row.email),
+    name: String(row.name),
+    role: String(row.role) as Role,
   };
 }
 
-/** True bila request datang lewat HTTPS (langsung atau via reverse proxy). */
-export function requestUsesHttps(req: Request): boolean {
-  if (process.env.FORCE_SECURE_COOKIES === 'true') return true;
-  const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
-  if (proto) return proto === 'https';
-  try {
-    return new URL(req.url).protocol === 'https:';
-  } catch {
-    return false;
+export async function requireUser(): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user) throw new HttpError(401, 'UNAUTHORIZED', 'Sesi tidak valid atau sudah berakhir. Silakan login ulang.');
+  return user;
+}
+
+export async function requireRole(...roles: Role[]): Promise<SessionUser> {
+  const user = await requireUser();
+  if (!roles.includes(user.role)) {
+    throw new HttpError(403, 'FORBIDDEN', 'Role akun ini tidak punya akses ke fitur tersebut.');
   }
+  return user;
 }

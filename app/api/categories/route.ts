@@ -1,23 +1,27 @@
-import { NextResponse } from 'next/server';
-import { createCategory, listCategories, ValidationError } from '@/lib/db';
+import { requireUser } from '@/lib/auth';
+import { apiOk, runApi } from '@/lib/http';
+import { categoryInputSchema } from '@/lib/validation';
+import { createCategory, listCategoriesFor } from '@/lib/repositories/categories';
+import { getUsageSnapshot } from '@/lib/api-tracker';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const categories = await listCategories();
-  return NextResponse.json({ ok: true, categories });
+  return runApi(async () => {
+    const user = await requireUser();
+    const [categories, usage] = await Promise.all([
+      listCategoriesFor(user),
+      getUsageSnapshot(user.id, user.role),
+    ]);
+    return apiOk({ categories, usage });
+  });
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const category = await createCategory(body);
-    return NextResponse.json({ ok: true, category }, { status: 201 });
-  } catch (err) {
-    if (err instanceof ValidationError) {
-      return NextResponse.json({ ok: false, error: err.message }, { status: 400 });
-    }
-    console.error('[categories:POST]', err);
-    return NextResponse.json({ ok: false, error: 'Gagal menyimpan kategori.' }, { status: 500 });
-  }
+  return runApi(async () => {
+    const user = await requireUser();
+    const input = categoryInputSchema.parse(await req.json());
+    const category = await createCategory(user, input);
+    return apiOk({ category }, 201);
+  });
 }

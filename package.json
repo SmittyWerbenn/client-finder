@@ -2,23 +2,37 @@
   "name": "client-finder",
   "version": "1.0.0",
   "private": true,
-  "description": "Client Finder - Google Places prospect scraper (Next.js App Router, zero-setup local JSON store)",
+  "description": "ClientFinder — prospect engine Google Places dengan RBAC, audit API, dan database SQLite/PostgreSQL (Next.js App Router)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:generate:pg": "drizzle-kit generate --config drizzle.pg.config.ts",
+    "db:migrate": "node scripts/migrate.mjs",
+    "fake:places": "node tests/fake-places.mjs",
+    "test:e2e": "node tests/e2e.mjs"
+  },
+  "engines": {
+    "node": ">=22.9"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "drizzle-orm": "^0.45.4",
     "jose": "^6.2.1",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^5.9.3"
   }
 }

@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clientfinder
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clientfinder_change_me}
+      POSTGRES_DB: clientfinder
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U clientfinder -d clientfinder']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://clientfinder:${POSTGRES_PASSWORD:-clientfinder_change_me}@db:5432/clientfinder
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Isi NEXTAUTH_SECRET (min. 32 karakter) di file .env}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      SEED_SUPERADMIN_NAME: ${SEED_SUPERADMIN_NAME:-Superadmin}
+      SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL:-}
+      SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD:-}
+      API_HIT_MONTHLY_LIMIT: ${API_HIT_MONTHLY_LIMIT:-5000}
+      USER_MONTHLY_HIT_LIMIT: ${USER_MONTHLY_HIT_LIMIT:-500}
+      NEXT_PUBLIC_CATALOG_URL: ${NEXT_PUBLIC_CATALOG_URL:-}
+
+volumes:
+  pgdata:

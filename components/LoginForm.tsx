@@ -2,68 +2,71 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { apiFetch } from '@/lib/client-api';
 
-export default function LoginForm({ configured }: { configured: boolean }) {
+type LoginResult = {
+  user: { id: string; email: string; name: string; role: string };
+};
+
+export default function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
     if (loading) return;
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      await apiFetch<LoginResult>('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (!res.ok || !data.ok) {
-        setError(data.error ?? 'Gagal masuk. Coba lagi.');
-        setLoading(false);
-        return;
-      }
-      router.replace('/dashboard');
+      const next = nextPath;
+      router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
       router.refresh();
-    } catch {
-      setError('Tidak dapat menghubungi server. Periksa koneksi lalu coba lagi.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal masuk. Coba lagi.');
       setLoading(false);
     }
   }
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      {!configured && (
-        <div className="alert alert-warn">
-          <span>!</span>
-          <span>
-            <strong>APP_ADMIN_PASSWORD belum diisi.</strong> Tambahkan variabel tersebut di file{' '}
-            <span className="mono">.env.local</span> lalu restart server.
-          </span>
-        </div>
-      )}
-
-      {error && (
+      {error ? (
         <div className="alert alert-error" role="alert">
           <span>!</span>
           <span>{error}</span>
         </div>
-      )}
+      ) : null}
 
       <label className="field">
-        <span>Admin Password</span>
+        <span>Email</span>
+        <input
+          className="input"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="nama@perusahaan.com"
+          autoComplete="username"
+          autoFocus
+          required
+        />
+      </label>
+
+      <label className="field">
+        <span>Password</span>
         <input
           className="input"
           type={show ? 'text' : 'password'}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
           autoComplete="current-password"
-          autoFocus
           required
         />
       </label>
@@ -79,11 +82,11 @@ export default function LoginForm({ configured }: { configured: boolean }) {
           cursor: 'pointer',
         }}
       >
-        <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
+        <input type="checkbox" checked={show} onChange={(event) => setShow(event.target.checked)} />
         Tampilkan password
       </label>
 
-      <button className="btn btn-primary btn-block" type="submit" disabled={loading || !password}>
+      <button className="btn btn-primary btn-block" type="submit" disabled={loading || !email || !password}>
         {loading ? (
           <>
             <span className="spinner" aria-hidden="true" />
@@ -95,7 +98,7 @@ export default function LoginForm({ configured }: { configured: boolean }) {
       </button>
 
       <p style={{ marginTop: 18, fontSize: 12.5, color: 'var(--slate-400)', textAlign: 'center' }}>
-        Sesi tersimpan di cookie httpOnly (tidak bisa dibaca JavaScript).
+        Sesi tersimpan di cookie httpOnly yang tidak bisa dibaca JavaScript.
       </p>
     </form>
   );
