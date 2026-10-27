@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/SmittyWerbenn/client-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/SmittyWerbenn/client-finder/actions/workflows/ci.yml)
 [![Deploy GitHub Pages](https://github.com/SmittyWerbenn/client-finder/actions/workflows/pages.yml/badge.svg)](https://github.com/SmittyWerbenn/client-finder/actions/workflows/pages.yml)
-[![Demo statis](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://smittywerbenn.github.io/client-finder/)
+[![Demo statis](https://img.shields.io/badge/demo-client--finder.frel.cloud-2ea44f)](https://client-finder.frel.cloud/)
 
-Demo statis (data contoh, tanpa server): <https://smittywerbenn.github.io/client-finder/dashboard/>
+Demo statis (data contoh, tanpa server): <https://client-finder.frel.cloud/dashboard/>
 
 Aplikasi pencarian prospek (calon klien) dari **Google Places API (New)** untuk agensi jasa
 pembuatan website. Nilai jualnya satu kalimat: *tampilkan usaha yang **belum punya website***,
@@ -417,13 +417,19 @@ GitHub Pages hanya menyajikan file statis. Aplikasi penuh butuh proses Node kare
 - kategori disimpan di `data/db.json` lewat `lib/db.ts`.
 
 Karena itu `pages.yml` menghapus `app/api` dan `proxy.ts` di runner sebelum build, lalu build
-memakai tiga env berikut:
+memakai env berikut:
 
 ```bash
 NEXT_STATIC_EXPORT=1   # next.config.ts → output: 'export'
 NEXT_PUBLIC_DEMO=1     # lib/demo.ts → pencarian & export dijalankan di browser
-NEXT_BASE_PATH=/client-finder   # basePath + assetPrefix untuk project pages
+NEXT_BASE_PATH=''      # kosong: custom domain menyajikan artifact di root
 ```
+
+Situs Pages dipasang di custom domain **<https://client-finder.frel.cloud/>** (DNS `CNAME` ke
+`smittywerbenn.github.io`, proxied Cloudflare). Karena custom domain melayani artifact di **root**,
+build **tidak boleh** memakai `basePath` — kalau diisi `/client-finder`, HTML meminta
+`/client-finder/_next/...` yang tidak ada di root sehingga **CSS & JS 404** (halaman tampil tanpa
+style). URL `smittywerbenn.github.io/client-finder/` otomatis 301 ke custom domain.
 
 Hasilnya `out/` berisi `/`, `/login`, `/dashboard` sebagai halaman statis. Di mode ini:
 
@@ -436,9 +442,9 @@ Build lokal untuk menguji Pages (tanpa mengubah source permanen):
 
 ```bash
 mv app/api /tmp/api && mv proxy.ts /tmp/proxy.ts
-NEXT_STATIC_EXPORT=1 NEXT_PUBLIC_DEMO=1 NEXT_BASE_PATH=/client-finder npm run build
+NEXT_STATIC_EXPORT=1 NEXT_PUBLIC_DEMO=1 NEXT_BASE_PATH='' npm run build
 mv /tmp/api app/api && mv /tmp/proxy.ts proxy.ts
-python3 -m http.server 8099 --directory out   # buka /dashboard
+python3 -m http.server 8099 --directory out   # buka /dashboard/
 ```
 
 ### 10.3 Deploy aplikasi penuh (butuh Node)
