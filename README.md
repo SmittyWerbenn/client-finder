@@ -477,7 +477,11 @@ Prototype ini menambahkan simulasi SaaS lengkap tanpa database eksternal. Semua 
 - `components/TemplateModal.tsx` — editor template dengan placeholder `{{business_name}}`,
   `{{city}}`, `{{pitch_angle}}`, `{{catalog_url}}` dan pratinjau langsung.
 - `components/ProspectTable.tsx` — status pipeline (warna badge), split-button Kirim WA + dropdown template,
-  tombol LinkedIn X-Ray, pagination 20 baris.
+  tombol LinkedIn X-Ray, pagination 20 baris, tombol **Broadcast WhatsApp Semua** di atas tabel.
+- `components/BroadcastModal.tsx` — modal konfirmasi broadcast: pilih template, jeda 3/5/10 dtk,
+  estimasi waktu, progress bar, pause/stop, peringatan pop-up blocker.
+- `lib/useMassBroadcastQueue.ts` — hook antrean: loop `setTimeout`, hitung `sent`/`blocked`,
+  pause/resume/stop, timer berjalan.
 - `components/Dashboard.tsx` — 2 tab pencarian, filter rating/ulasan/telepon, stat cards, export CSV.
 
 ### 11.3 Perilaku demo
@@ -490,3 +494,21 @@ Prototype ini menambahkan simulasi SaaS lengkap tanpa database eksternal. Semua 
 - Tombol LinkedIn membuka Google X-Ray `site:linkedin.com/in ("<nama>" OR "<kota>") ("Owner" OR "Founder" OR "Manager")`.
 - Di server (`npm run dev` / `npm start`) switch **Live API** memakai `POST /api/search`
   (placeholder `name` → Text Search `"<nama> di <kota>"`); di build statis pilihan itu dinonaktifkan.
+
+### 11.4 Mass WhatsApp Broadcast
+
+Tombol **🚀 Broadcast WhatsApp Semua (X Kontak)** duduk di header tabel dan hanya menghitung prospek
+yang punya nomor valid (`normalizeWaPhone`). Alurnya:
+
+1. Modal konfirmasi: pilih template WA, jeda antar chat (3/5/10 dtk), lihat preview pesan pertama
+   dan estimasi waktu (`jumlah kontak × jeda`).
+2. **Mulai Broadcast** menjalankan antrean di sisi client: satu `window.open('https://wa.me/<nomor>?text=…')`
+   per kontak, dipisah `setTimeout` sesuai jeda. Tidak ada request server, jadi tetap jalan di build statis.
+3. UI menampilkan progress bar + counter `Mengirim X dari Y prospek`, nama bisnis terakhir,
+   hitung mundur chat berikutnya, dan tombol **Pause / Lanjutkan / Stop Broadcast**.
+4. Baris yang sudah dibuka otomatis berstatus **Contacted** (tanpa toast per baris).
+5. Jika browser memblokir tab (`window.open` → `null`), modal menampilkan peringatan berisi jumlah tab
+   terblokir + petunjuk mengizinkan pop-up untuk `wa.me`; status Contacted tetap tercatat.
+
+Catatan: tab WA dibuka berurutan, jadi browser bisa menahan tab ke-2 dan seterusnya sampai pop-up
+diizinkan. Jeda 3–10 dtk juga mencegah browser freeze.

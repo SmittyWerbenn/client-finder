@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Prospect } from '@/lib/types';
+import BroadcastModal from './BroadcastModal';
 import {
   LEAD_STATUSES,
   linkedInXrayUrl,
@@ -24,6 +25,7 @@ export default function ProspectTable({
   onStatusFilter,
   onStatusChange,
   onExport,
+  notify,
   loading,
   note,
 }: {
@@ -35,14 +37,18 @@ export default function ProspectTable({
   totalCount: number;
   statusFilter: LeadStatus | 'all';
   onStatusFilter: (value: LeadStatus | 'all') => void;
-  onStatusChange: (placeId: string, status: LeadStatus) => void;
+  onStatusChange: (placeId: string, status: LeadStatus, silent?: boolean) => void;
   onExport: () => void;
+  notify: (message: string, isError?: boolean) => void;
   loading?: boolean;
   note?: string;
 }) {
   const [page, setPage] = useState(1);
+  const [showBroadcast, setShowBroadcast] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const broadcastCount = rows.filter((lead) => normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw)).length;
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -106,9 +112,24 @@ export default function ProspectTable({
           ))}
         </div>
 
-        <button type="button" className="btn btn-sm btn-navy export-btn" onClick={onExport} disabled={rows.length === 0}>
-          Export CSV
-        </button>
+        <div className="results-actions">
+          <button
+            type="button"
+            className="btn btn-sm btn-broadcast"
+            onClick={() => setShowBroadcast(true)}
+            disabled={broadcastCount === 0 || templates.length === 0}
+            title={
+              broadcastCount === 0
+                ? 'Tidak ada prospek dengan nomor WhatsApp valid'
+                : 'Kirim template WA ke semua kontak di tabel secara berurutan'
+            }
+          >
+            🚀 Broadcast WhatsApp Semua ({broadcastCount} Kontak)
+          </button>
+          <button type="button" className="btn btn-sm btn-navy export-btn" onClick={onExport} disabled={rows.length === 0}>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -297,6 +318,18 @@ export default function ProspectTable({
           </div>
         </>
       )}
+
+      {showBroadcast ? (
+        <BroadcastModal
+          rows={rows}
+          city={city}
+          templates={templates}
+          statuses={statuses}
+          onStatusChange={onStatusChange}
+          onClose={() => setShowBroadcast(false)}
+          notify={notify}
+        />
+      ) : null}
     </div>
   );
 }

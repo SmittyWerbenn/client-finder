@@ -245,8 +245,9 @@ export default function Dashboard({
     }
   }
 
-  function changeStatus(placeId: string, status: LeadStatus) {
+  function changeStatus(placeId: string, status: LeadStatus, silent = false) {
     mutate((state) => ({ ...state, statuses: { ...state.statuses, [placeId]: status } }));
+    if (silent) return;
     const label = LEAD_STATUSES.find((item) => item.value === status)?.label ?? status;
     notify(`Status diperbarui: ${label}.`);
   }
@@ -550,6 +551,7 @@ export default function Dashboard({
           onStatusFilter={setStatusFilter}
           onStatusChange={changeStatus}
           onExport={exportCsv}
+          notify={notify}
           loading={loading}
           note={tableNote}
         />
