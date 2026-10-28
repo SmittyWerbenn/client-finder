@@ -181,7 +181,11 @@ export default function SearchWorkspace({
           <h1>
             Pencarian Prospek {demo ? <span className="demo-chip">Mode Demo</span> : null}
           </h1>
-          <p>
+          <p className="page-sub">
+            Cari dan saring calon mitra kerja sama, klien penawaran jasa, atau jaringan supplier lokal di wilayah
+            target Anda.
+          </p>
+          <p className="page-meta">
             {demo ? (
               <>
                 Data contoh lokal · filter website fleksibel · kuota demo {usage.userHits}/{usage.userLimit} hit

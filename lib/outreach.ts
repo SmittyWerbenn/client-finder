@@ -27,17 +27,17 @@ export const DEFAULT_FILTERS: ProspectFilters = {
 export const WEBSITE_FILTER_OPTIONS: { value: WebsiteFilter; label: string; short: string }[] = [
   {
     value: 'all',
-    label: 'Semua Bisnis (rekomendasi partnership & supplier)',
+    label: 'Semua Bisnis (Rekomendasi Kerja Sama, Supplier & Kemitraan)',
     short: 'Semua bisnis',
   },
   {
     value: 'no_website',
-    label: 'Khusus tanpa website (penawaran jasa web / digitalisasi)',
+    label: 'Khusus Tanpa Website (Untuk Penawaran Jasa Pembuatan Web & IT)',
     short: 'Tanpa website',
   },
   {
     value: 'has_website',
-    label: 'Khusus yang sudah punya website',
+    label: 'Khusus yang Sudah Memiliki Website',
     short: 'Sudah punya website',
   },
 ];

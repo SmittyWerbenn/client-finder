@@ -547,6 +547,21 @@
   padding: 3px 8px;
 }
 
+/* ───────────── Header console ───────────── */
+
+.page-head .page-sub {
+  max-width: 720px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--slate-500);
+}
+
+.page-head .page-meta {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--slate-400);
+}
+
 /* ───────────── Filter status website (opsional) ───────────── */
 
 .website-filter {

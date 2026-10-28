@@ -24,18 +24,18 @@ export default function Hero() {
         <div className="lnd-hero-copy">
           <span className="lnd-eyebrow">
             <span className="lnd-dot" aria-hidden="true" />
-            B2B prospecting &amp; partnership engine untuk bisnis lokal
+            &#128640; Universal B2B Prospecting &amp; Partnership Engine
           </span>
 
           <h1>
-            Temukan Ribuan Calon Klien &amp; Partner Bisnis Lokal Siap Kolaborasi{' '}
-            <span className="lnd-grad">Tanpa Riset Manual.</span>
+            Temukan Ribuan Calon Klien &amp; Mitra Bisnis Lokal untuk{' '}
+            <span className="lnd-grad">Berbagai Kebutuhan Kerja Sama.</span>
           </h1>
 
           <p className="lnd-hero-sub">
-            Mesin pencari prospek B2B berbasis Google Maps untuk menyaring bisnis lokal terverifikasi di seluruh
-            Indonesia. Dapatkan kontak pengambil keputusan (decision maker), jalin kemitraan, atau tawarkan produk
-            &amp; jasa Anda secara terarah.
+            Mesin prospeksi B2B berbasis Google Maps untuk menyaring bisnis lokal terverifikasi di seluruh Indonesia.
+            Dari ekspansi supplier, penawaran jasa profesional, hingga kemitraan strategis&mdash;dapatkan kontak
+            langsung penanggung jawab bisnis dan mulai jalin kolaborasi dalam hitungan detik.
           </p>
 
           <div className="lnd-cta-row">

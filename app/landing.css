@@ -873,8 +873,9 @@ body:has(.lnd) {
 
 .lnd-uc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 18px;
+  align-items: stretch;
 }
 
 .lnd-uc {
@@ -922,7 +923,7 @@ body:has(.lnd) {
 
 .lnd-uc-filter {
   align-self: flex-start;
-  margin-top: 13px;
+  margin-top: auto;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--uc-accent, #4b8dff) 45%, transparent);
@@ -930,11 +931,12 @@ body:has(.lnd) {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  line-height: 1.45;
   color: #dbe6ff;
 }
 
 .lnd-uc-body {
-  margin-top: 12px;
+  margin: 12px 0 16px;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--lnd-muted);
