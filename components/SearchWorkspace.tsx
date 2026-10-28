@@ -79,6 +79,10 @@ export default function SearchWorkspace({
       setError('Belum ada kategori untuk akun Anda. Minta Superadmin menugaskan kategori terlebih dahulu.');
       return;
     }
+    if (tab === 'name' && nameQuery.trim().length < 2) {
+      setError('Isi nama usaha atau brand dulu (minimal 2 karakter).');
+      return;
+    }
     setLoading(true);
     setError(null);
     setStatusFilter('all');
@@ -157,21 +161,49 @@ export default function SearchWorkspace({
       </div>
 
       <section className="card search-card">
-        <div className="search-tabs">
-          <button
-            type="button"
-            className={`search-tab ${tab === 'category' ? 'active' : ''}`}
-            onClick={() => setTab('category')}
-          >
-            Kategori Usaha
-          </button>
-          <button
-            type="button"
-            className={`search-tab ${tab === 'name' ? 'active' : ''}`}
-            onClick={() => setTab('name')}
-          >
-            Nama Usaha / Brand
-          </button>
+        <div className="search-mode-head">
+          <span className="search-mode-label">Mode pencarian</span>
+          <div className="search-tabs" role="group" aria-label="Mode pencarian prospek">
+            <button
+              type="button"
+              className={`search-tab ${tab === 'category' ? 'active' : ''}`}
+              aria-pressed={tab === 'category'}
+              onClick={() => setTab('category')}
+            >
+              <span className="tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+                </svg>
+              </span>
+              <span className="tab-text">
+                <strong>Kategori Usaha</strong>
+                <small>Telusuri per jenis bisnis</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`search-tab ${tab === 'name' ? 'active' : ''}`}
+              aria-pressed={tab === 'name'}
+              onClick={() => setTab('name')}
+            >
+              <span className="tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 20V7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5V20" />
+                  <path d="M4 20h16M9.5 20v-5.5h5V20" />
+                  <path d="M9 9h6" />
+                </svg>
+              </span>
+              <span className="tab-text">
+                <strong>Nama Usaha / Brand</strong>
+                <small>Sudah tahu nama targetnya</small>
+              </span>
+            </button>
+          </div>
+          <p className="search-mode-help">
+            {tab === 'category'
+              ? 'Cari semua usaha pada satu kategori di kota terpilih — cocok untuk prospecting massal.'
+              : 'Cari usaha berdasarkan nama atau brand tertentu — cocok kalau targetnya sudah spesifik.'}
+          </p>
         </div>
 
         <div className="search-body">
@@ -217,6 +249,7 @@ export default function SearchWorkspace({
                     </option>
                   ))}
                 </select>
+                <small className="field-hint">Sistem memindai semua usaha di kategori ini pada kota terpilih.</small>
               </label>
             ) : (
               <label className="field search-field">
@@ -225,9 +258,13 @@ export default function SearchWorkspace({
                   className="input"
                   value={nameQuery}
                   onChange={(event) => setNameQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') void runSearch();
+                  }}
                   placeholder="mis. Kopi Kenangan"
                   maxLength={80}
                 />
+                <small className="field-hint">Tulis nama atau brand lalu tekan Enter. Minimal 2 karakter.</small>
               </label>
             )}
           </div>
@@ -270,6 +307,9 @@ export default function SearchWorkspace({
 
           <div className="search-foot">
             <span className="query-preview">
+              <span className={`query-mode-chip ${tab === 'category' ? 'is-category' : 'is-name'}`}>
+                {tab === 'category' ? 'Mode kategori' : 'Mode nama'}
+              </span>
               Query: <code>{queryPreview}</code>
               <span className="search-mode-note">Google Places Text Search</span>
             </span>
