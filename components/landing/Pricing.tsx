@@ -1,70 +1,39 @@
+'use client';
+
+import { useState } from 'react';
+import CheckoutDialog, { type CheckoutPlan } from './CheckoutDialog';
+import { PLAN_CATALOG } from '@/lib/plans';
 import { WA_MESSAGES, waLink } from '@/lib/site';
 
-type Plan = {
-  name: string;
-  tagline: string;
-  price: string;
-  priceNote: string;
-  quota: string;
-  features: string[];
-  cta: string;
-  href: string;
-  featured?: boolean;
+/**
+ * Kartu harga landing page.
+ *
+ * Paket berbayar (Starter & Agency Pro) memakai tombol utama "Beli / Order"
+ * yang membuka dialog checkout DOKU — bukan lagi tautan WhatsApp. WhatsApp
+ * hanya jadi aksi sekunder "Butuh bantuan / Tanya Admin", dan tetap menjadi
+ * kanal utama untuk paket Enterprise/Custom.
+ */
+
+const PAID_PLANS = [PLAN_CATALOG.STARTER, PLAN_CATALOG.AGENCY_PRO];
+
+const ENTERPRISE = {
+  name: 'ENTERPRISE & CUSTOM ENGINE',
+  tagline: 'Untuk tim sales besar, agensi, atau kebutuhan private deployment.',
+  price: 'Kustom',
+  priceNote: 'Sesuai kebutuhan',
+  quota: 'Kuota fleksibel / unlimited via dedicated API key',
+  features: [
+    'Kategori usaha & kota tanpa batas',
+    'Multi-source prospecting data di luar Google Maps',
+    'Integrasi otomatis ke CRM internal, webhook, atau WhatsApp gateway perusahaan',
+    'Private deployment (on-premise / private cloud) dengan isolasi database',
+    'Konsultasi teknis langsung dengan tim engineer',
+  ],
 };
 
-const PLANS: Plan[] = [
-  {
-    name: 'STARTER PASS',
-    tagline: 'Cocok untuk freelancer atau tim sales kecil yang baru memulai prospecting.',
-    price: 'Rp 199.000',
-    priceNote: 'Top-up / sekali beli',
-    quota: '5x Sesi Pencarian (hingga 250 kontak leads)',
-    features: [
-      'Akses basis data 38 provinsi se-Indonesia',
-      'Filter status website fleksibel (semua / tanpa / sudah punya)',
-      '4 preset template WhatsApp multi-tujuan',
-      'Export data ke CSV',
-      '1-Click Direct WhatsApp',
-    ],
-    cta: 'Beli Paket Starter',
-    href: waLink(WA_MESSAGES.starter),
-  },
-  {
-    name: 'AGENCY PRO',
-    tagline: 'Paling pas untuk agency, supplier, dan tim partnership yang prospecting tiap hari.',
-    price: 'Rp 499.000',
-    priceNote: 'Top-up / sekali beli',
-    quota: '15x Sesi Pencarian (hingga 1.000 kontak leads)',
-    features: [
-      'Semua fitur di Paket Starter',
-      'Mass WhatsApp Broadcast ke seluruh baris tabel',
-      'Tool pelacak pemilik bisnis via LinkedIn Decision Maker',
-      'Custom template broadcast tanpa batas',
-      'Prioritas bantuan support',
-    ],
-    cta: 'Pilih Paket Pro',
-    href: waLink(WA_MESSAGES.pro),
-    featured: true,
-  },
-  {
-    name: 'ENTERPRISE & CUSTOM ENGINE',
-    tagline: 'Untuk tim sales besar, agensi, atau kebutuhan private deployment.',
-    price: 'Kustom',
-    priceNote: 'Sesuai kebutuhan',
-    quota: 'Kuota fleksibel / unlimited via dedicated API key',
-    features: [
-      'Kategori usaha & kota tanpa batas',
-      'Multi-source prospecting data di luar Google Maps',
-      'Integrasi otomatis ke CRM internal, webhook, atau WhatsApp gateway perusahaan',
-      'Private deployment (on-premise / private cloud) dengan isolasi database',
-      'Konsultasi teknis langsung dengan tim engineer',
-    ],
-    cta: 'Konsultasi Custom Engine',
-    href: waLink(WA_MESSAGES.customEngine),
-  },
-];
-
 export default function Pricing() {
+  const [selected, setSelected] = useState<CheckoutPlan | null>(null);
+
   return (
     <section className="lnd-section lnd-section-alt" id="harga">
       <div className="lnd-container">
@@ -72,14 +41,14 @@ export default function Pricing() {
           <span className="lnd-kicker">Harga Lisensi</span>
           <h2>Pilih paket sesuai volume prospecting Anda</h2>
           <p>
-            Sekali beli, tanpa biaya bulanan tersembunyi. Kuota pencarian bisa di-top-up kapan saja saat stok lead
-            mulai menipis.
+            Sekali beli, tanpa biaya bulanan tersembunyi. Pembayaran online otomatis lewat DOKU (Virtual Account,
+            QRIS, e-wallet, dan kartu kredit) — kuota aktif setelah pembayaran terkonfirmasi.
           </p>
         </header>
 
         <div className="lnd-pricing-grid">
-          {PLANS.map((plan) => (
-            <article key={plan.name} className={`lnd-plan ${plan.featured ? 'is-featured' : ''}`}>
+          {PAID_PLANS.map((plan) => (
+            <article key={plan.id} className={`lnd-plan ${plan.featured ? 'is-featured' : ''}`}>
               {plan.featured ? <span className="lnd-plan-badge">Paling Populer</span> : null}
 
               <header>
@@ -88,7 +57,7 @@ export default function Pricing() {
               </header>
 
               <div className="lnd-plan-price">
-                <strong>{plan.price}</strong>
+                <strong>{plan.priceLabel}</strong>
                 <span>{plan.priceNote}</span>
               </div>
 
@@ -105,23 +74,73 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              <a
-                href={plan.href}
-                target="_blank"
-                rel="noreferrer"
-                className={`lnd-btn lnd-btn-block ${plan.featured ? 'lnd-btn-primary' : 'lnd-btn-outline'}`}
-              >
-                {plan.cta}
-              </a>
+              <div className="lnd-plan-actions">
+                <button
+                  type="button"
+                  className="lnd-btn lnd-btn-block lnd-btn-primary"
+                  onClick={() =>
+                    setSelected({ id: plan.id, name: plan.name, priceLabel: plan.priceLabel, quota: plan.quota })
+                  }
+                >
+                  {plan.featured ? 'Beli / Order Paket Pro' : 'Beli / Order Paket Starter'}
+                </button>
+                <a
+                  className="lnd-plan-help"
+                  href={waLink(`${WA_MESSAGES.paymentHelp} Paket: ${plan.name}.`)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Butuh bantuan / Tanya Admin
+                </a>
+              </div>
             </article>
           ))}
+
+          <article className="lnd-plan">
+            <header>
+              <h3>{ENTERPRISE.name}</h3>
+              <p className="lnd-plan-tagline">{ENTERPRISE.tagline}</p>
+            </header>
+
+            <div className="lnd-plan-price">
+              <strong>{ENTERPRISE.price}</strong>
+              <span>{ENTERPRISE.priceNote}</span>
+            </div>
+
+            <div className="lnd-plan-quota">{ENTERPRISE.quota}</div>
+
+            <ul className="lnd-plan-features">
+              {ENTERPRISE.features.map((feature) => (
+                <li key={feature}>
+                  <svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 10.5l4 4 8-9" />
+                  </svg>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="lnd-plan-actions">
+              <a
+                className="lnd-btn lnd-btn-block lnd-btn-outline"
+                href={waLink(WA_MESSAGES.customEngine)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Konsultasi Custom Engine
+              </a>
+            </div>
+          </article>
         </div>
 
         <p className="lnd-pricing-note">
-          Semua pembelian diproses manual oleh admin via WhatsApp untuk memastikan akun dan kuota aktif sebelum
-          digunakan. Butuh invoice perusahaan? Sebutkan saat konsultasi.
+          Pembayaran paket Starter &amp; Agency Pro diproses otomatis melalui DOKU Checkout. Setelah pembayaran
+          terkonfirmasi, kuota pencarian ditambahkan ke akun Anda. Butuh invoice perusahaan, pembayaran termin, atau
+          paket Enterprise? Hubungi admin via WhatsApp.
         </p>
       </div>
+
+      {selected ? <CheckoutDialog plan={selected} onClose={() => setSelected(null)} /> : null}
     </section>
   );
 }

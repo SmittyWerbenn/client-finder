@@ -110,6 +110,12 @@ curl localhost:3000/api/health
 | `USER_MONTHLY_HIT_LIMIT` | — | Plafon hit role USER/bulan (default 500). |
 | `DATABASE_SSL` | — | `true` untuk Postgres terkelola. |
 | `SESSION_TTL_HOURS` | — | Masa sesi, default 12 jam. |
+| `DOKU_CLIENT_ID` | ✅** | Client ID DOKU Checkout. Tanpa Client ID/Secret, tombol beli membalas 503 `DOKU_NOT_CONFIGURED`. |
+| `DOKU_SECRET_KEY` | ✅** | Secret key DOKU (dipakai untuk signature non-SNAP). |
+| `DOKU_IS_PRODUCTION` | — | `true` (default) mengarah ke `api.doku.com`. |
+| `DOKU_CHECKOUT_URL_PROD` / `_SANDBOX` | — | Override endpoint checkout (base URL atau URL penuh). |
+| `NEXT_PUBLIC_APP_URL` | — | Dipakai sebagai `callback_url` DOKU + tautan status. |
+| `NEXT_PUBLIC_ADMIN_WHATSAPP` | — | Nomor admin untuk aksi sekunder "Butuh bantuan". |
 
 Lihat `.env.example` untuk daftar lengkap.
 
@@ -136,6 +142,8 @@ lib/
   places.ts           pipeline Google Places
   demo-data.ts        fixture 18 leads untuk mode demo read-only
   demo-api.ts         mock API client saat cookie `cf_demo` aktif
+  doku.ts             DOKU Checkout: signature, create payment, verifikasi webhook
+  plans.ts            katalog paket berbayar (sumber tunggal harga)
   site.ts             identitas komersial + tautan WhatsApp admin
   auth.ts / session.ts / roles.ts
 drizzle/
@@ -166,6 +174,10 @@ tests/                fake Places server + E2E API/RBAC
 | PATCH/DELETE | `/api/admin/users/:id` | Superadmin | Ubah/hapus user. |
 | POST | `/api/admin/users/:id/reset-password` | Superadmin | Reset password. |
 | GET | `/api/admin/usage` | Admin+ | Metrik + audit log API. |
+| POST | `/api/checkout` | publik | Buat order paket + sesi pembayaran DOKU. |
+| POST | `/api/doku/notification` | publik (signature) | Webhook DOKU → update status order. |
+| GET | `/api/orders/:invoiceNumber` | publik | Status order (field publik saja). |
+| GET | `/api/admin/orders` | Admin+ | Daftar order + ringkasan revenue. |
 | POST/GET | `/api/export` | auth (scoped) | CSV (≤1000 baris). |
 | GET | `/api/health` | publik | Status server + database. |
 
@@ -179,6 +191,77 @@ Semua respons JSON memakai amplop konsisten:
 Setiap panggilan Google Places (termasuk retry/gagal) dicatat atomik ke
 `api_usage_logs` + `api_usage_counters` dengan `userId`, endpoint, query,
 status, `httpStatus`, `placeId`, dan durasi.
+
+---
+
+## Pembayaran Online (DOKU Checkout)
+
+Paket **Starter Pass** (Rp 199.000) dan **Agency Pro** (Rp 499.000) dibeli
+langsung dari landing page. Tombol **Beli / Order** membuka dialog data
+pelanggan lalu mengarahkan browser ke halaman pembayaran DOKU (Virtual
+Account, QRIS, e-wallet, kartu kredit). WhatsApp hanya aksi sekunder
+("Butuh bantuan / Tanya Admin") dan tetap kanal utama paket Enterprise.
+
+### Alur
+
+```
+landing (#harga) → CheckoutDialog → POST /api/checkout
+   → order PENDING di tabel orders (invoice CF…)
+   → POST https://api.doku.com/checkout/v1/payment (signed)
+   → redirect response.payment.url (checkout.doku.com)
+   → pelanggan bayar → DOKU POST /api/doku/notification (signed)
+   → order PAID → /checkout/status?invoice=… (polling 5 detik)
+```
+
+Halaman hasil memakai `order.callback_url` + `auto_redirect`, sehingga
+pelanggan kembali ke `/checkout/status` setelah transaksi.
+
+### Signature (non-SNAP)
+
+```
+Digest    = base64(sha256(body_mentah))
+Component = "Client-Id:<id>\nRequest-Id:<uuid>\nRequest-Timestamp:<ISO8601Z>\n
+             Request-Target:<path>\nDigest:<digest>"
+Signature = "HMACSHA256=" + base64(hmac_sha256(secret_key, Component))
+```
+
+Dikirim sebagai header `Client-Id`, `Request-Id`, `Request-Timestamp`,
+`Signature`. Untuk webhook, `Request-Target` = path URL notifikasi
+(`/api/doku/notification`) dan digest dihitung dari body yang diterima —
+verifikasi memakai perbandingan waktu-konstan.
+
+### Konfigurasi di DOKU Back Office
+
+1. Isi `DOKU_CLIENT_ID` + `DOKU_SECRET_KEY` pada `.env` (jangan di-commit).
+2. Set **Notification URL** = `https://<domain>/api/doku/notification`.
+   Request juga mengirim `additional_info.override_notification_url`.
+3. Mode production: `DOKU_IS_PRODUCTION=true`.
+
+Tanpa kredensial, `/api/checkout` membalas `503 DOKU_NOT_CONFIGURED`; order
+tetap tersimpan sebagai PENDING dan dialog menawarkan penyelesaian manual
+via WhatsApp beserta nomor invoice.
+
+### Status order
+
+`PENDING` → `PAID` (notifikasi `transaction.status = SUCCESS`).
+`FAILED` dari DOKU **diabaikan** untuk Checkout (pelanggan masih bisa
+memilih kanal lain). Notifikasi berulang bersifat idempotent — `paid_at`
+tidak berubah dan status `PAID` tidak pernah turun. Nominal notifikasi
+dibandingkan dengan `orders.amount` sebelum order ditandai lunas.
+
+### Verifikasi cepat
+
+```bash
+# buat sesi pembayaran (butuh kredensial DOKU)
+curl -sS -X POST "$APP/api/checkout" -H 'Content-Type: application/json' \
+  -d '{"planId":"STARTER","name":"Nama","email":"a@b.co","phone":"08123456789"}'
+
+# status order (publik, tanpa email/telepon)
+curl -sS "$APP/api/orders/<INVOICE>"
+
+# daftar order untuk admin (butuh sesi)
+curl -sS -b cookie.txt "$APP/api/admin/orders"
+```
 
 ---
 

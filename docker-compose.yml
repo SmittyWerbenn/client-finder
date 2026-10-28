@@ -15,7 +15,11 @@ services:
       retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://client-finder.frel.cloud}
+        NEXT_PUBLIC_ADMIN_WHATSAPP: ${NEXT_PUBLIC_ADMIN_WHATSAPP:-6285778185971}
     restart: unless-stopped
     depends_on:
       db:
@@ -35,6 +39,14 @@ services:
       API_HIT_MONTHLY_LIMIT: ${API_HIT_MONTHLY_LIMIT:-5000}
       USER_MONTHLY_HIT_LIMIT: ${USER_MONTHLY_HIT_LIMIT:-500}
       NEXT_PUBLIC_CATALOG_URL: ${NEXT_PUBLIC_CATALOG_URL:-}
+      # ── DOKU Checkout (pembayaran online paket) ─────────────────────────
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+      DOKU_CLIENT_ID: ${DOKU_CLIENT_ID:-}
+      DOKU_SECRET_KEY: ${DOKU_SECRET_KEY:-}
+      DOKU_IS_PRODUCTION: ${DOKU_IS_PRODUCTION:-true}
+      DOKU_CHECKOUT_URL_SANDBOX: ${DOKU_CHECKOUT_URL_SANDBOX:-https://api-sandbox.doku.com/checkout/v1/payment}
+      DOKU_CHECKOUT_URL_PROD: ${DOKU_CHECKOUT_URL_PROD:-https://api.doku.com/checkout/v1/payment}
+      NEXT_PUBLIC_ADMIN_WHATSAPP: ${NEXT_PUBLIC_ADMIN_WHATSAPP:-}
 
 volumes:
   pgdata:

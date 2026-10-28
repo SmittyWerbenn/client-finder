@@ -117,3 +117,34 @@ export const apiUsageCounters = pgTable(
   },
   (table) => [primaryKey({ columns: [table.userId, table.period] })],
 );
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: text('id').primaryKey(),
+    invoiceNumber: text('invoice_number').notNull(),
+    userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+    planId: text('plan_id').notNull(),
+    planName: text('plan_name').notNull(),
+    amount: integer('amount').notNull(),
+    status: text('status').notNull().default('PENDING'),
+    customerName: text('customer_name').notNull(),
+    customerEmail: text('customer_email').notNull(),
+    customerPhone: text('customer_phone').notNull(),
+    company: text('company'),
+    dokuPaymentUrl: text('doku_payment_url'),
+    dokuTokenId: text('doku_token_id'),
+    dokuRequestId: text('doku_request_id'),
+    channel: text('channel'),
+    paidAt: bigint('paid_at', { mode: 'number' }),
+    expiresAt: bigint('expires_at', { mode: 'number' }),
+    notificationPayload: text('notification_payload'),
+    createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+    updatedAt: bigint('updated_at', { mode: 'number' }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('orders_invoice_unique').on(table.invoiceNumber),
+    index('orders_status_idx').on(table.status),
+    index('orders_created_idx').on(table.createdAt),
+  ],
+);

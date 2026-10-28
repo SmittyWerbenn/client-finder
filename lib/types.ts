@@ -123,3 +123,38 @@ export type UsageOverview = {
   logs: UsageLogEntry[];
   totalUsers: number;
 };
+
+/* ── Pembayaran (DOKU Checkout) ─────────────────────────────────────────── */
+
+export type OrderStatus = 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';
+
+export type Order = {
+  id: string;
+  invoiceNumber: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  status: OrderStatus;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  company: string | null;
+  paymentUrl: string | null;
+  channel: string | null;
+  paidAt: string | null;
+  expiresAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+/** Data order yang aman ditampilkan ke publik di halaman status. */
+export type PublicOrderStatus = {
+  invoiceNumber: string;
+  planName: string;
+  amount: number;
+  status: OrderStatus;
+  channel: string | null;
+  paidAt: string | null;
+  expiresAt: string | null;
+  createdAt: string | null;
+};

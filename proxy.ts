@@ -12,7 +12,19 @@ import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
  *   ULANG di route handler (role di JWT bisa basi bila user diubah).
  */
 
-const PUBLIC_APIS = new Set(['/api/auth/login', '/api/health']);
+const PUBLIC_APIS = new Set([
+  '/api/auth/login',
+  '/api/health',
+  // Checkout paket berbayar (pengunjung belum punya akun) + webhook DOKU.
+  '/api/checkout',
+  '/api/doku/notification',
+]);
+/** Status order dibaca halaman /checkout/status tanpa sesi (hanya field publik). */
+const PUBLIC_API_PREFIXES = ['/api/orders/'];
+
+function isPublicApi(pathname: string): boolean {
+  return PUBLIC_APIS.has(pathname) || PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 function redirectLegacy(req: NextRequest, targetPath: string): NextResponse {
   const url = new URL(targetPath, req.url);
@@ -85,7 +97,7 @@ export default async function proxy(req: NextRequest) {
     return demoCookie(NextResponse.redirect(new URL('/', req.url)), false);
   }
 
-  if (PUBLIC_APIS.has(pathname)) return NextResponse.next();
+  if (isPublicApi(pathname)) return NextResponse.next();
   if (pathname === '/') return NextResponse.next();
 
   // ── Halaman login console ───────────────────────────────────────

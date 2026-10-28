@@ -2,6 +2,11 @@
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* di-inline saat build (dipakai landing page & tombol checkout).
+ARG NEXT_PUBLIC_APP_URL=""
+ARG NEXT_PUBLIC_ADMIN_WHATSAPP=""
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_ADMIN_WHATSAPP=$NEXT_PUBLIC_ADMIN_WHATSAPP
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .

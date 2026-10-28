@@ -89,3 +89,18 @@ export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
 export type LeadUpdateInput = z.infer<typeof leadUpdateSchema>;
 export type UserCreateInput = z.infer<typeof userCreateSchema>;
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+
+/** Permintaan checkout paket berbayar (DOKU Checkout). */
+export const checkoutSchema = z.object({
+  planId: z.enum(['STARTER', 'AGENCY_PRO'], { message: 'Paket tidak dikenal.' }),
+  name: shortText('Nama', 2, 80),
+  email,
+  phone: z
+    .string()
+    .trim()
+    .min(8, 'Nomor WhatsApp minimal 8 digit.')
+    .max(20, 'Nomor WhatsApp maksimal 20 digit.')
+    .regex(/^[0-9+\-\s()]+$/, 'Nomor WhatsApp hanya boleh berisi angka.')
+    .refine((value) => value.replace(/\D/g, '').length >= 8, 'Nomor WhatsApp minimal 8 digit.'),
+  company: z.string().trim().max(80).optional().default(''),
+});
