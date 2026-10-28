@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { DEMO_HREF, WA_MESSAGES, waLink } from '@/lib/site';
+import { DEMO_HREF, WA_MESSAGES, WHATSAPP_DISPLAY, waLink } from '@/lib/site';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -20,7 +20,7 @@ export default function Footer() {
             ambil kontak WhatsApp pengambil keputusan, lalu jalankan outreach sekali klik.
           </p>
           <a href={waLink(WA_MESSAGES.consult)} target="_blank" rel="noreferrer" className="lnd-footer-wa">
-            WhatsApp Admin · 0857-8284-6851
+            WhatsApp Admin · {WHATSAPP_DISPLAY}
           </a>
         </div>
 

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
+import { WA_MESSAGES, WHATSAPP_DISPLAY, waLink } from '@/lib/site';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -73,8 +74,8 @@ export default async function LoginPage({
               Coba demo gratis
             </Link>{' '}
             atau{' '}
-            <a href="https://wa.me/6285782846851?text=Halo%20Admin%2C%20saya%20ingin%20tanya%20paket%20ClientFinder." target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>
-              hubungi admin
+            <a href={waLink(WA_MESSAGES.consult)} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>
+              hubungi admin {WHATSAPP_DISPLAY}
             </a>
             .
           </p>

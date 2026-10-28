@@ -3,7 +3,10 @@
 export const SITE_URL = 'https://client-finder.frel.cloud';
 
 /** Nomor WhatsApp admin penjualan (format internasional tanpa tanda +). */
-export const WHATSAPP_ADMIN = '6285782846851';
+export const WHATSAPP_ADMIN = '6285778185971';
+
+/** Nomor WhatsApp admin penjualan untuk ditampilkan ke pengunjung. */
+export const WHATSAPP_DISPLAY = '+62 857-7818-5971';
 
 export const DEMO_HREF = '/console?mode=demo';
 export const LOGIN_HREF = '/console/login';

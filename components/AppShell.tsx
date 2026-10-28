@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/client-api';
+import { WA_MESSAGES, waLink } from '@/lib/site';
 import { ROLE_LABELS, isAdmin } from '@/lib/roles';
 import type { SessionUser } from '@/lib/auth';
 import type { UsageSnapshot } from '@/lib/types';
@@ -132,7 +133,7 @@ export default function AppShell({
             <div className="demo-banner-actions">
               <a
                 className="demo-banner-btn ghost"
-                href="https://wa.me/6285782846851?text=Halo%20Admin%2C%20saya%20sudah%20mencoba%20demo%20ClientFinder%20dan%20ingin%20tanya%20paket%20langganan."
+                href={waLink(WA_MESSAGES.demo)}
                 target="_blank"
                 rel="noreferrer"
               >
