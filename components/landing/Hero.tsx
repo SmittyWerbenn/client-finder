@@ -39,7 +39,7 @@ export default function Hero() {
           </p>
 
           <div className="lnd-cta-row">
-            <Link href={DEMO_HREF} className="lnd-btn lnd-btn-primary lnd-btn-lg">
+            <Link href={DEMO_HREF} prefetch={false} className="lnd-btn lnd-btn-primary lnd-btn-lg">
               &#128640; Coba Demo Langsung (Tanpa Login)
             </Link>
             <a

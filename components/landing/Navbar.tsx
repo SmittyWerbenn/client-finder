@@ -44,7 +44,7 @@ export default function Navbar() {
         </nav>
 
         <div className="lnd-nav-actions">
-          <Link href={DEMO_HREF} className="lnd-btn lnd-btn-ghost lnd-btn-sm">
+          <Link href={DEMO_HREF} prefetch={false} className="lnd-btn lnd-btn-ghost lnd-btn-sm">
             Coba Demo Gratis
           </Link>
           <Link href={LOGIN_HREF} className="lnd-btn lnd-btn-primary lnd-btn-sm">
@@ -75,7 +75,7 @@ export default function Navbar() {
             ))}
           </nav>
           <div className="lnd-mobile-actions">
-            <Link href={DEMO_HREF} className="lnd-btn lnd-btn-ghost" onClick={() => setOpen(false)}>
+            <Link href={DEMO_HREF} prefetch={false} className="lnd-btn lnd-btn-ghost" onClick={() => setOpen(false)}>
               Coba Demo Gratis
             </Link>
             <Link href={LOGIN_HREF} className="lnd-btn lnd-btn-primary" onClick={() => setOpen(false)}>

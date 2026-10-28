@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Category, Lead, LeadStatus, SearchMeta, SearchResponse, UsageSnapshot } from '@/lib/types';
 import type { SessionUser } from '@/lib/auth';
-import { PROVINCES, citiesForProvince } from '@/lib/locations';
+import { PROVINCES, citiesForProvince, provinceOfCity } from '@/lib/locations';
 import { DEFAULT_FILTERS, WEBSITE_FILTER_OPTIONS, websiteFilterLabel, matchesFilters, type ProspectFilters, type WaTemplate } from '@/lib/outreach';
 import { apiFetch } from '@/lib/client-api';
 import ProspectTable from './ProspectTable';
@@ -32,8 +32,12 @@ export default function SearchWorkspace({
   const [categories] = useState(initialCategories);
   const [tab, setTab] = useState<Tab>('category');
   const [categoryId, setCategoryId] = useState(initialCategories[0]?.id ?? '');
-  const [province, setProvince] = useState('');
-  const [city, setCity] = useState('');
+  // Mode demo langsung siap pakai: kota awal mengikuti dataset mock supaya
+  // tombol "Cari Prospek" tidak memblokir pengunjung dengan error validasi.
+  const demoSeed = demo ? initialLeads.find((lead) => lead.city && provinceOfCity(lead.city)) : undefined;
+  const demoCity = demoSeed?.city ?? '';
+  const [province, setProvince] = useState(demoCity ? provinceOfCity(demoCity) ?? '' : '');
+  const [city, setCity] = useState(demoCity);
   const [nameQuery, setNameQuery] = useState('');
   const [filters, setFilters] = useState<ProspectFilters>(DEFAULT_FILTERS);
   const [leads, setLeads] = useState<Lead[]>(initialLeads);

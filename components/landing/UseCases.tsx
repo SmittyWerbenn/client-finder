@@ -77,7 +77,7 @@ export default function UseCases() {
 
         <p className="lnd-uc-note">
           Ingin melihat kelima skenario berjalan dengan data contoh?{' '}
-          <Link href={DEMO_HREF}>Coba demo interaktif &rarr;</Link>
+          <Link href={DEMO_HREF} prefetch={false}>Coba demo interaktif &rarr;</Link>
         </p>
       </div>
     </section>

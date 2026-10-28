@@ -69,7 +69,7 @@ export default async function LoginPage({
 
           <p style={{ marginTop: 20, fontSize: 13, color: 'var(--slate-500)', textAlign: 'center' }}>
             Belum punya akses?{' '}
-            <Link href="/console?mode=demo" style={{ fontWeight: 600 }}>
+            <Link href="/console?mode=demo" prefetch={false} style={{ fontWeight: 600 }}>
               Coba demo gratis
             </Link>{' '}
             atau{' '}

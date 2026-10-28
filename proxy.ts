@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DEMO_COOKIE, DEMO_COOKIE_MAX_AGE } from '@/lib/demo-cookie';
+import { DEMO_ALIAS_COOKIE, DEMO_COOKIE, DEMO_COOKIE_MAX_AGE } from '@/lib/demo-cookie';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
 
 /**
@@ -27,18 +27,44 @@ function denyPage(req: NextRequest): NextResponse {
 }
 
 function demoCookie(response: NextResponse, enabled: boolean): NextResponse {
-  if (enabled) {
-    response.cookies.set(DEMO_COOKIE, '1', {
-      httpOnly: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: DEMO_COOKIE_MAX_AGE,
-    });
-  } else {
-    response.cookies.set(DEMO_COOKIE, '', { httpOnly: false, sameSite: 'lax', path: '/', maxAge: 0 });
+  const names = [DEMO_COOKIE, DEMO_ALIAS_COOKIE];
+  for (const name of names) {
+    if (enabled) {
+      response.cookies.set(name, name === DEMO_ALIAS_COOKIE ? 'true' : '1', {
+        httpOnly: false,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: DEMO_COOKIE_MAX_AGE,
+      });
+    } else {
+      response.cookies.set(name, '', { httpOnly: false, sameSite: 'lax', path: '/', maxAge: 0 });
+    }
   }
   return response;
 }
+
+/** Prefetch Next.js tidak boleh menanam cookie demo / meng-cache hasil redirect login. */
+function isPrefetch(req: NextRequest): boolean {
+  return (
+    req.headers.get('next-router-prefetch') === '1' ||
+    req.headers.get('x-middleware-prefetch') === '1' ||
+    req.headers.get('purpose') === 'prefetch'
+  );
+}
+
+/**
+ * Tanam cookie demo pada REQUEST (bukan hanya response) supaya layout server
+ * pada request RSC yang sama sudah melihat `isDemoMode()` = true. Tanpa ini,
+ * klik `<Link href="/console?mode=demo">` (navigasi RSC) akan ditolak layout
+ * dan pengunjung terlempar kembali ke /console/login.
+ */
+function enterDemo(req: NextRequest): NextResponse {
+  req.cookies.set(DEMO_COOKIE, '1');
+  req.cookies.set(DEMO_ALIAS_COOKIE, 'true');
+  return demoCookie(NextResponse.next({ request: { headers: req.headers } }), true);
+}
+
+const DEMO_BLOCKED_PAGES = ['/console/leads', '/console/api-usage', '/console/users'];
 
 export default async function proxy(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
@@ -81,16 +107,11 @@ export default async function proxy(req: NextRequest) {
 
     const demoCookieActive = req.cookies.get(DEMO_COOKIE)?.value === '1';
     if (pathname.startsWith('/console') && (demoParam || demoCookieActive)) {
-      // Prefetch Next.js (mis. tautan "Coba Demo" di landing) tidak boleh
-      // menanam cookie demo — hanya navigasi dokumen sungguhan.
-      const isPrefetch =
-        req.headers.get('next-router-prefetch') === '1' ||
-        req.headers.get('x-middleware-prefetch') === '1' ||
-        req.headers.get('purpose') === 'prefetch';
-      // Hanya navigasi dokumen yang boleh menanam cookie demo.
-      const fetchDest = req.headers.get('sec-fetch-dest');
-      const isDocument = fetchDest ? fetchDest === 'document' : req.headers.get('rsc') !== '1';
-      if (!demoCookieActive && demoParam && !isPrefetch && isDocument) return demoCookie(NextResponse.next(), true);
+      if (isPrefetch(req)) return NextResponse.next();
+      if (DEMO_BLOCKED_PAGES.some((path) => pathname.startsWith(path))) {
+        return NextResponse.redirect(new URL('/console?mode=demo', req.url));
+      }
+      if (demoParam) return enterDemo(req);
       return NextResponse.next();
     }
 

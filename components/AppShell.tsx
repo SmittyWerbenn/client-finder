@@ -119,11 +119,15 @@ export default function AppShell({
         {demo ? (
           <div className="demo-banner" role="status">
             <span className="demo-banner-icon" aria-hidden="true">
-              ◉
+              {'\u{1F4A1}'}
             </span>
             <p>
-              Anda sedang melihat <b>Demo Interaktif ClientFinder (Read-Only)</b>. Untuk mulai mencari lead riil dan
-              integrasi WhatsApp live, silakan hubungi admin atau login.
+              Anda sedang mencoba ClientFinder dalam <b>Mode Demo</b>. Semua data pencarian di bawah menggunakan simulasi
+              data lokal tanpa mengonsumsi kuota Google Places API asli.
+              <span className="demo-banner-sub">
+                Anda sedang melihat Demo Interaktif ClientFinder (Read-Only). Untuk mulai mencari lead riil dan integrasi
+                WhatsApp live, silakan hubungi admin atau login.
+              </span>
             </p>
             <div className="demo-banner-actions">
               <a
@@ -149,11 +153,12 @@ export default function AppShell({
             <div className="topbar-title">{current.label}</div>
             <div className="topbar-spacer" />
             <div className="user-menu">
+              {demo ? <span className="demo-user-badge">Mode Demo (Read-Only)</span> : null}
               <div className="user-avatar">{user.name.slice(0, 1).toUpperCase()}</div>
               <div className="user-meta">
                 <span className="user-name">{user.name}</span>
                 <span className="user-sub">
-                  {demo ? 'Mode demo · read-only' : `${ROLE_LABELS[user.role]} · ${user.email}`}
+                  {demo ? `User / Client · ${user.email}` : `${ROLE_LABELS[user.role]} · ${user.email}`}
                 </span>
               </div>
             </div>
@@ -165,6 +170,7 @@ export default function AppShell({
                 aria-label="Keluar dari mode demo"
                 onClick={() => {
                   document.cookie = 'cf_demo=; Max-Age=0; Path=/';
+                  document.cookie = 'is_demo_session=; Max-Age=0; Path=/';
                 }}
               >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

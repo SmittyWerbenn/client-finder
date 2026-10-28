@@ -71,7 +71,7 @@ export default function Niches() {
         <p className="lnd-niche-note">
           Masih ada 14 sub-kategori lain di dalam console — dari klinik hewan, florist, catering, sampai rental
           kendaraan.{' '}
-          <Link href={DEMO_HREF}>Lihat semuanya di demo interaktif &rarr;</Link>
+          <Link href={DEMO_HREF} prefetch={false}>Lihat semuanya di demo interaktif &rarr;</Link>
         </p>
       </div>
     </section>

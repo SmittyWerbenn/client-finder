@@ -30,7 +30,7 @@ export default function Footer() {
           <a href="#skenario">Skenario Penggunaan</a>
           <a href="#kategori">Kategori Bisnis</a>
           <a href="#harga">Harga Lisensi</a>
-          <Link href={DEMO_HREF}>Demo Interaktif</Link>
+          <Link href={DEMO_HREF} prefetch={false}>Demo Interaktif</Link>
         </nav>
 
         <nav className="lnd-footer-col" aria-label="Navigasi perusahaan">

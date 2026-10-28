@@ -22,6 +22,12 @@ export class ApiClientError extends Error {
 
 export async function apiFetch<T>(input: string, init?: RequestInit): Promise<T> {
   if (isDemoModeClient()) {
+    // Demo: simulasi latensi pencarian (500–1000ms) supaya UX terasa seperti
+    // query sungguhan, tanpa satu pun request ke Google Places API.
+    if (input.includes('/api/search')) {
+      const method = (init?.method ?? 'GET').toUpperCase();
+      if (method === 'POST') await new Promise((resolve) => setTimeout(resolve, 700));
+    }
     const { status, payload } = demoApiRequest(input, init);
     if (status >= 400 || !payload.ok) {
       const error = payload.ok ? null : payload.error;

@@ -18,8 +18,8 @@ const CATALOG_CREATED = '2026-09-01T08:00:00.000Z';
 export const DEMO_USER: SessionUser = {
   id: 'demo-visitor',
   email: 'demo@clientfinder.id',
-  name: 'Demo Visitor',
-  role: 'SUPERADMIN',
+  name: 'Demo Account',
+  role: 'USER',
 };
 
 export const DEMO_CATEGORIES: Category[] = DEFAULT_CATEGORIES.map((category) => ({
@@ -116,7 +116,7 @@ export const DEMO_USAGE: UsageSnapshot = {
 };
 
 export const DEMO_USERS: PublicUser[] = [
-  { id: DEMO_USER.id, email: 'demo@clientfinder.id', name: 'Demo Visitor', role: 'SUPERADMIN', isActive: true, createdAt: CATALOG_CREATED, leads: 18 },
+  { id: DEMO_USER.id, email: 'demo@clientfinder.id', name: DEMO_USER.name, role: 'USER', isActive: true, createdAt: CATALOG_CREATED, leads: 18 },
   { id: 'usr-02', email: 'owner@agencypro.id', name: 'Rangga Pratama', role: 'ADMIN', isActive: true, createdAt: '2026-09-12T03:10:00.000Z', leads: 74 },
   { id: 'usr-03', email: 'sari@digitalnusa.co', name: 'Sari Wulandari', role: 'USER', isActive: true, createdAt: '2026-09-20T06:45:00.000Z', leads: 31 },
   { id: 'usr-04', email: 'budi@webstudio.id', name: 'Budi Santoso', role: 'USER', isActive: false, createdAt: '2026-09-25T09:20:00.000Z', leads: 12 },
@@ -141,14 +141,14 @@ function buildDaily(): Array<{ date: string; hits: number }> {
 }
 
 const DEMO_LOGS: UsageLogEntry[] = [
-  { id: 'log-01', userId: DEMO_USER.id, userName: 'Demo Visitor', userEmail: 'demo@clientfinder.id', endpoint: 'TEXT_SEARCH', queryParam: 'lapangan padel futsal badminton di Kota Bandung', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 812, createdAt: isoDaysAgo(0, 10, 12) },
-  { id: 'log-02', userId: DEMO_USER.id, userName: 'Demo Visitor', userEmail: 'demo@clientfinder.id', endpoint: 'PLACE_DETAILS', queryParam: 'Padel Arena Buah Batu', status: 'SUCCESS', httpStatus: 200, placeId: 'demo-dl-01', durationMs: 214, createdAt: isoDaysAgo(0, 10, 12) },
+  { id: 'log-01', userId: DEMO_USER.id, userName: DEMO_USER.name, userEmail: 'demo@clientfinder.id', endpoint: 'TEXT_SEARCH', queryParam: 'lapangan padel futsal badminton di Kota Bandung', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 812, createdAt: isoDaysAgo(0, 10, 12) },
+  { id: 'log-02', userId: DEMO_USER.id, userName: DEMO_USER.name, userEmail: 'demo@clientfinder.id', endpoint: 'PLACE_DETAILS', queryParam: 'Padel Arena Buah Batu', status: 'SUCCESS', httpStatus: 200, placeId: 'demo-dl-01', durationMs: 214, createdAt: isoDaysAgo(0, 10, 12) },
   { id: 'log-03', userId: 'usr-02', userName: 'Rangga Pratama', userEmail: 'owner@agencypro.id', endpoint: 'TEXT_SEARCH', queryParam: 'restoran keluarga kafe di Kota Surabaya', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 967, createdAt: isoDaysAgo(1, 14, 5) },
   { id: 'log-04', userId: 'usr-02', userName: 'Rangga Pratama', userEmail: 'owner@agencypro.id', endpoint: 'PLACE_DETAILS', queryParam: 'Kopi Rindu Senja', status: 'ERROR', httpStatus: 429, placeId: 'demo-dl-07', durationMs: 142, createdAt: isoDaysAgo(1, 14, 7) },
   { id: 'log-05', userId: 'usr-03', userName: 'Sari Wulandari', userEmail: 'sari@digitalnusa.co', endpoint: 'TEXT_SEARCH', queryParam: 'toko bahan bangunan besi di Kab. Bekasi', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 903, createdAt: isoDaysAgo(2, 11, 40) },
   { id: 'log-06', userId: 'usr-03', userName: 'Sari Wulandari', userEmail: 'sari@digitalnusa.co', endpoint: 'PLACE_DETAILS', queryParam: 'Toko Besi Sumber Rejeki', status: 'SUCCESS', httpStatus: 200, placeId: 'demo-dl-14', durationMs: 187, createdAt: isoDaysAgo(2, 11, 41) },
   { id: 'log-07', userId: 'usr-02', userName: 'Rangga Pratama', userEmail: 'owner@agencypro.id', endpoint: 'TEXT_SEARCH', queryParam: 'konveksi sablon merchandise di Kota Cimahi', status: 'ERROR', httpStatus: 500, placeId: null, durationMs: 1240, createdAt: isoDaysAgo(4, 9, 2) },
-  { id: 'log-08', userId: DEMO_USER.id, userName: 'Demo Visitor', userEmail: 'demo@clientfinder.id', endpoint: 'TEXT_SEARCH', queryParam: 'klinik hewan pet shop grooming di Kota Denpasar', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 734, createdAt: isoDaysAgo(5, 16, 30) },
+  { id: 'log-08', userId: DEMO_USER.id, userName: DEMO_USER.name, userEmail: 'demo@clientfinder.id', endpoint: 'TEXT_SEARCH', queryParam: 'klinik hewan pet shop grooming di Kota Denpasar', status: 'SUCCESS', httpStatus: 200, placeId: null, durationMs: 734, createdAt: isoDaysAgo(5, 16, 30) },
 ];
 
 export const DEMO_OVERVIEW: UsageOverview = {

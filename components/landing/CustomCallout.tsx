@@ -139,7 +139,7 @@ export default function CustomCallout() {
               >
                 {'\u{1F4AC}'} Konsultasi Kustomisasi Engine
               </a>
-              <Link href={DEMO_HREF} className="lnd-btn lnd-btn-outline lnd-btn-lg">
+              <Link href={DEMO_HREF} prefetch={false} className="lnd-btn lnd-btn-outline lnd-btn-lg">
                 {'\u{1F5A5}\u{FE0F}'} Coba Console Demo
               </Link>
             </div>

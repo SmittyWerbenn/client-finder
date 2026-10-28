@@ -2076,6 +2076,34 @@
   color: #ffffff;
 }
 
+.demo-banner-sub {
+  display: block;
+  margin-top: 5px;
+  color: rgba(234, 241, 255, 0.78);
+  font-size: 11.5px;
+}
+
+.demo-user-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  margin-right: 4px;
+  border-radius: 999px;
+  border: 1px solid #bfd6ff;
+  background: var(--blue-50);
+  color: var(--blue-600);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .demo-user-badge {
+    display: none;
+  }
+}
+
 .demo-banner-icon {
   color: #8ab6ff;
   font-size: 15px;
