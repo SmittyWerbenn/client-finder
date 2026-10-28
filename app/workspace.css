@@ -362,12 +362,55 @@
 
 .search-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.15fr) minmax(0, 1.25fr);
+  gap: 16px;
+  align-items: end;
 }
 
 .search-field {
   margin-bottom: 0;
+  display: block;
+}
+
+/* Ketiga field memakai kerangka identik supaya baseline sejajar */
+.search-grid .field-label {
+  display: flex;
+  align-items: center;
+  height: 16px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 650;
+  letter-spacing: 0.1px;
+  color: var(--slate-700);
+  white-space: nowrap;
+}
+
+.search-grid .select,
+.search-grid .input {
+  height: 42px;
+  min-height: 42px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 13.5px;
+}
+
+.search-grid .select {
+  background-position: calc(100% - 18px) 18px, calc(100% - 13px) 18px;
+}
+
+.search-grid .select:disabled {
+  background-color: var(--slate-50);
+  border-color: var(--line);
+  color: var(--slate-400);
+  cursor: not-allowed;
+}
+
+.search-hint {
+  margin: 9px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--slate-500);
 }
 
 .filter-row {

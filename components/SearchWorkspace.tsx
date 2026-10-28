@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Category, Lead, LeadStatus, SearchMeta, SearchResponse, UsageSnapshot } from '@/lib/types';
 import type { SessionUser } from '@/lib/auth';
-import { DEFAULT_CITY, DEFAULT_PROVINCE, JAVA_PROVINCES, citiesForProvince, defaultCityFor } from '@/lib/locations';
+import { PROVINCES, citiesForProvince } from '@/lib/locations';
 import { matchesFilters, type ProspectFilters, type WaTemplate } from '@/lib/outreach';
 import { apiFetch } from '@/lib/client-api';
 import ProspectTable from './ProspectTable';
@@ -30,8 +30,8 @@ export default function SearchWorkspace({
   const [categories] = useState(initialCategories);
   const [tab, setTab] = useState<Tab>('category');
   const [categoryId, setCategoryId] = useState(initialCategories[0]?.id ?? '');
-  const [province, setProvince] = useState(DEFAULT_PROVINCE);
-  const [city, setCity] = useState(DEFAULT_CITY);
+  const [province, setProvince] = useState('');
+  const [city, setCity] = useState('');
   const [nameQuery, setNameQuery] = useState('');
   const [filters, setFilters] = useState<ProspectFilters>({ phoneOnly: false, minRating: 0, minReviews: 0 });
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
@@ -51,10 +51,11 @@ export default function SearchWorkspace({
   const notify = useCallback((message: string, isError = false) => setToast({ message, error: isError }), []);
 
   const category = categories.find((item) => item.id === categoryId) ?? categories[0] ?? null;
+  const cityOptions = useMemo(() => citiesForProvince(province), [province]);
   const queryPreview =
     tab === 'category'
-      ? `"${category?.keyword ?? 'usaha lokal'} di ${city}"`
-      : `"${nameQuery.trim() || 'nama usaha'} di ${city}"`;
+      ? `"${category?.keyword ?? 'usaha lokal'} di ${city || '{Kota / Kabupaten}'}"`
+      : `"${nameQuery.trim() || 'nama usaha'} di ${city || '{Kota / Kabupaten}'}"`;
 
   const filteredLeads = useMemo(() => {
     const searched = leads.filter((lead) => matchesFilters(lead, filters));
@@ -81,6 +82,14 @@ export default function SearchWorkspace({
     }
     if (tab === 'name' && nameQuery.trim().length < 2) {
       setError('Isi nama usaha atau brand dulu (minimal 2 karakter).');
+      return;
+    }
+    if (!province) {
+      setError('Pilih provinsi dulu sebelum mencari.');
+      return;
+    }
+    if (!city) {
+      setError('Pilih kota / kabupaten dulu sebelum mencari.');
       return;
     }
     setLoading(true);
@@ -208,18 +217,18 @@ export default function SearchWorkspace({
 
         <div className="search-body">
           <div className="search-grid">
-            <label className="field">
-              <span>Provinsi</span>
+            <label className="field search-field">
+              <span className="field-label">Provinsi</span>
               <select
                 className="select"
                 value={province}
                 onChange={(event) => {
-                  const nextProvince = event.target.value;
-                  setProvince(nextProvince);
-                  setCity(defaultCityFor(nextProvince));
+                  setProvince(event.target.value);
+                  setCity('');
                 }}
               >
-                {JAVA_PROVINCES.map((group) => (
+                <option value="">Pilih provinsi…</option>
+                {PROVINCES.map((group) => (
                   <option key={group.province} value={group.province}>
                     {group.province}
                   </option>
@@ -227,10 +236,18 @@ export default function SearchWorkspace({
               </select>
             </label>
 
-            <label className="field">
-              <span>Kota / Kabupaten</span>
-              <select className="select" value={city} onChange={(event) => setCity(event.target.value)}>
-                {citiesForProvince(province).map((item) => (
+            <label className="field search-field">
+              <span className="field-label">Kota / Kabupaten</span>
+              <select
+                className="select"
+                value={city}
+                disabled={!province}
+                onChange={(event) => setCity(event.target.value)}
+              >
+                <option value="">
+                  {province ? 'Pilih kota / kabupaten…' : 'Pilih Provinsi terlebih dahulu'}
+                </option>
+                {cityOptions.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
@@ -240,7 +257,7 @@ export default function SearchWorkspace({
 
             {tab === 'category' ? (
               <label className="field search-field">
-                <span>Kategori prospek</span>
+                <span className="field-label">Kategori prospek</span>
                 <select className="select" value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
                   {categories.length === 0 ? <option value="">Belum ada kategori</option> : null}
                   {categories.map((item) => (
@@ -249,11 +266,10 @@ export default function SearchWorkspace({
                     </option>
                   ))}
                 </select>
-                <small className="field-hint">Sistem memindai semua usaha di kategori ini pada kota terpilih.</small>
               </label>
             ) : (
               <label className="field search-field">
-                <span>Nama usaha / brand</span>
+                <span className="field-label">Nama usaha / brand</span>
                 <input
                   className="input"
                   value={nameQuery}
@@ -264,10 +280,15 @@ export default function SearchWorkspace({
                   placeholder="mis. Kopi Kenangan"
                   maxLength={80}
                 />
-                <small className="field-hint">Tulis nama atau brand lalu tekan Enter. Minimal 2 karakter.</small>
               </label>
             )}
           </div>
+
+          <p className="search-hint">
+            {tab === 'category'
+              ? 'Sistem memindai semua usaha di kategori ini pada kota terpilih.'
+              : 'Tulis nama atau brand lalu tekan Enter. Minimal 2 karakter.'}
+          </p>
 
           <div className="filter-row">
             <label className="mini-field">
