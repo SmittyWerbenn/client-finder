@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="ClientFinder">
+  <rect width="64" height="64" rx="15" fill="#0a1f3c" />
+  <text
+    x="32"
+    y="47.9"
+    text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif"
+    font-size="60"
+    font-weight="700"
+    fill="#2b74f0"
+  >c</text>
+</svg>
