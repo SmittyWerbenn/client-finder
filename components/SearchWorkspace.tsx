@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Category, Lead, LeadStatus, SearchMeta, SearchResponse, UsageSnapshot } from '@/lib/types';
 import type { SessionUser } from '@/lib/auth';
 import { PROVINCES, citiesForProvince } from '@/lib/locations';
-import { matchesFilters, type ProspectFilters, type WaTemplate } from '@/lib/outreach';
+import { DEFAULT_FILTERS, WEBSITE_FILTER_OPTIONS, websiteFilterLabel, matchesFilters, type ProspectFilters, type WaTemplate } from '@/lib/outreach';
 import { apiFetch } from '@/lib/client-api';
 import ProspectTable from './ProspectTable';
 
@@ -35,7 +35,7 @@ export default function SearchWorkspace({
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [nameQuery, setNameQuery] = useState('');
-  const [filters, setFilters] = useState<ProspectFilters>({ phoneOnly: false, minRating: 0, minReviews: 0 });
+  const [filters, setFilters] = useState<ProspectFilters>(DEFAULT_FILTERS);
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [meta, setMeta] = useState<SearchMeta | null>(null);
   const [usage, setUsage] = useState<UsageSnapshot>(initialUsage);
@@ -75,6 +75,20 @@ export default function SearchWorkspace({
   }, [leads, filters]);
 
   const withPhone = filteredLeads.filter((lead) => Boolean(lead.whatsapp)).length;
+  const withWebsite = leads.filter((lead) => Boolean(lead.website)).length;
+  const withoutWebsite = leads.length - withWebsite;
+  const skippedByFilter =
+    filters.websiteFilter === 'has_website'
+      ? meta?.skippedWithoutWebsite ?? 0
+      : filters.websiteFilter === 'no_website'
+        ? meta?.skippedWithWebsite ?? 0
+        : (meta?.skippedWithWebsite ?? 0) + (meta?.skippedWithoutWebsite ?? 0);
+  const skippedLabel =
+    filters.websiteFilter === 'has_website'
+      ? 'Dibuang (tanpa website)'
+      : filters.websiteFilter === 'no_website'
+        ? 'Dibuang (punya website)'
+        : 'Disaring filter website';
 
   async function runSearch() {
     if (loading) return;
@@ -105,12 +119,13 @@ export default function SearchWorkspace({
           categoryId: tab === 'category' ? categoryId : undefined,
           name: tab === 'name' ? nameQuery.trim() : undefined,
           city,
+          websiteFilter: filters.websiteFilter,
         }),
       });
       setLeads(payload.leads);
       setMeta(payload.meta);
       setUsage(payload.usage);
-      notify(`${payload.leads.length} prospek tanpa website ditemukan.`);
+      notify(`${payload.leads.length} prospek ditemukan · ${websiteFilterLabel(filters.websiteFilter)}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Pencarian gagal.');
     } finally {
@@ -169,11 +184,11 @@ export default function SearchWorkspace({
           <p>
             {demo ? (
               <>
-                Data contoh lokal · filter “tanpa website” selalu aktif · kuota demo {usage.userHits}/{usage.userLimit} hit
+                Data contoh lokal · filter website fleksibel · kuota demo {usage.userHits}/{usage.userLimit} hit
               </>
             ) : (
               <>
-                Masuk sebagai <b>{user.name}</b> · filter “tanpa website” selalu aktif · kuota {usage.userHits}/
+                Masuk sebagai <b>{user.name}</b> · filter website fleksibel · kuota {usage.userHits}/
                 {usage.userLimit} hit bulan {usage.period}
               </>
             )}
@@ -296,6 +311,29 @@ export default function SearchWorkspace({
             </label>
           </div>
 
+          <div className="website-filter">
+            <label className="field search-field">
+              <span className="field-label">Status website target</span>
+              <select
+                className="select"
+                value={filters.websiteFilter}
+                onChange={(event) =>
+                  setFilters({ ...filters, websiteFilter: event.target.value as ProspectFilters['websiteFilter'] })
+                }
+              >
+                {WEBSITE_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="search-hint website-filter-hint">
+              Pilih “Khusus tanpa website” jika target penawaran Anda berfokus pada pembuatan website baru. Biarkan
+              “Semua bisnis” untuk partnership, suplai, atau penawaran jasa lain.
+            </p>
+          </div>
+
           <p className="search-hint">
             {tab === 'category'
               ? 'Pilih kategori, lalu provinsi dan kota. Sistem memindai semua usaha di kategori ini pada kota terpilih.'
@@ -363,14 +401,16 @@ export default function SearchWorkspace({
           <small>{meta ? `${meta.pagesScanned} halaman` : 'menampilkan lead tersimpan'}</small>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Dibuang (punya website)</span>
-          <strong>{meta?.skippedWithWebsite ?? 0}</strong>
-          <small>filter wajib aktif</small>
+          <span className="stat-label">{skippedLabel}</span>
+          <strong>{skippedByFilter}</strong>
+          <small>{filters.websiteFilter === 'all' ? 'semua status diloloskan' : 'sesuai filter terpilih'}</small>
         </div>
         <div className="stat-card">
           <span className="stat-label">Lolos filter</span>
           <strong>{leads.length}</strong>
-          <small>{withPhone} punya nomor WhatsApp</small>
+          <small>
+            {withoutWebsite} tanpa web · {withWebsite} sudah online · {withPhone} punya WhatsApp
+          </small>
         </div>
         <div className="stat-card accent">
           <span className="stat-label">Hit API bulan ini</span>
@@ -393,7 +433,7 @@ export default function SearchWorkspace({
         onExport={() => void exportCsv()}
         notify={notify}
         loading={loading}
-        note="Tanpa website · data tersimpan di database"
+        note={`Status website: ${websiteFilterLabel(filters.websiteFilter)} · data tersimpan di database`}
       />
 
       <div className="toast-wrap">

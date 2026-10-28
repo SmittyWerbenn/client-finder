@@ -1,17 +1,22 @@
 [
   {
-    "id": "tpl-casual",
-    "name": "Template Casual",
-    "body": "Halo {{business_name}}! Saya Dewi dari ClientFinder. Saya lihat {{business_name}} di {{city}} belum punya website, jadi calon pelanggan susah cari info dan harga. {{pitch_angle}} Kalau berminat, saya kirim contoh katalog di {{catalog_url}}. Boleh saya kirim detailnya?"
+    "id": "tpl-website",
+    "name": "Jasa Pembuatan Website",
+    "body": "Halo {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Saya lihat {{business_name}} di {{city}} belum punya website resmi, jadi calon pelanggan sulit menemukan info produk dan harga. {{pitch_angle}} Kalau berminat, saya kirim contoh portofolio dan katalog di {{catalog_url}}. Boleh saya kirimkan detailnya?"
   },
   {
-    "id": "tpl-diskon",
-    "name": "Template Penawaran Diskon",
-    "body": "Halo tim {{business_name}}! Khusus bulan ini ClientFinder kasih paket website + katalog digital diskon 30% untuk bisnis di {{city}}. {{pitch_angle}} Contoh katalog: {{catalog_url}}. Mau saya kirim penawaran lengkapnya?"
+    "id": "tpl-partnership",
+    "name": "Kemitraan & Kolaborasi",
+    "body": "Halo tim {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda) di {{city}}. Kami ingin menjajaki sinergi bisnis dengan {{business_name}} — cross-promo, paket bersama, atau kerja sama operasional yang saling menguntungkan. {{pitch_angle}} Apakah ada waktu 10 menit minggu ini untuk diskusi singkat?"
   },
   {
-    "id": "tpl-formal",
-    "name": "Template Profesional",
-    "body": "Selamat pagi {{business_name}}, saya Dewi dari ClientFinder. Kami membantu bisnis di {{city}} tampil lebih kredibel secara online. {{pitch_angle}} Portofolio dan katalog bisa dilihat di {{catalog_url}}. Apakah bisa dijadwalkan diskusi singkat 10 menit minggu ini?"
+    "id": "tpl-supplier",
+    "name": "Penawaran Supplier / Grosir",
+    "body": "Halo {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Kami memasok kebutuhan (produk Anda) untuk bisnis seperti {{business_name}} di {{city}} dengan harga grosir dan pengiriman rutin. {{pitch_angle}} Saya bisa kirim price list terbaru di {{catalog_url}}. Mau saya siapkan penawaran untuk kebutuhan bulan ini?"
+  },
+  {
+    "id": "tpl-service",
+    "name": "Jasa Layanan Profesional",
+    "body": "Selamat pagi {{business_name}}, saya (nama Anda) dari (nama bisnis Anda). Kami membantu bisnis di {{city}} untuk (layanan Anda: legalitas, akuntansi, periklanan, atau konsultasi). {{pitch_angle}} Profil layanan kami ada di {{catalog_url}}. Apakah bisa dijadwalkan diskusi singkat untuk melihat apakah layanan ini relevan dengan {{business_name}}?"
   }
 ]

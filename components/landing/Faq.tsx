@@ -4,8 +4,12 @@ const FAQS = [
     a: 'Tidak. Kuota Google Places API sudah termasuk dalam paket yang Anda beli dan dipantau oleh admin melalui audit log. Untuk paket Enterprise Anda bisa memakai dedicated API key milik sendiri bila ingin kontrol biaya penuh.',
   },
   {
-    q: 'Bagaimana cara kerja filter "tanpa website"?',
-    a: 'Setiap hasil pencarian dari Google Places diperiksa field website-nya. Bisnis yang sudah memiliki domain aktif otomatis dibuang sebelum masuk ke tabel prospek, sehingga daftar yang Anda terima benar-benar target jasa pembuatan website.',
+    q: 'Bagaimana cara kerja filter status website?',
+    a: 'Filter ini opsional dan bisa dipilih saat mencari: “Semua Bisnis” untuk partnership, suplai, atau penawaran jasa umum; “Khusus Tanpa Website” untuk menawarkan jasa pembuatan website/digitalisasi; atau “Khusus yang Sudah Punya Website” untuk target yang sudah online. Sistem memeriksa field website dari Google Places sesuai pilihan Anda.',
+  },
+  {
+    q: 'Apakah ClientFinder hanya untuk jualan jasa website?',
+    a: 'Tidak. Data prospek bisa dipakai untuk penawaran supplier/grosir, kemitraan dan cross-promo, jasa legalitas/akuntansi/periklanan, konsultan, maupun riset pasar. Empat preset template WhatsApp tersedia untuk masing-masing tujuan tersebut.',
   },
   {
     q: 'Apakah data leads bisa di-export?',

@@ -6,16 +6,18 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    title: 'Filter Khusus Tanpa Website',
-    body: 'Sistem otomatis membuang bisnis yang sudah punya website. Penawaran jasa pembuatan web dan sistem jadi tepat sasaran, bukan tembakan acak.',
+    title: 'Akuisisi Prospek Multi-Sektor',
+    body: 'Cocok untuk vendor, supplier, agensi, konsultan, hingga brand partnership. Semua jenis bisnis lokal bisa dipetakan, bukan hanya target jasa pembuatan website.',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5z" />
+        <path d="M4 20V9l8-5 8 5v11" />
+        <path d="M9 20v-6h6v6M4 20h16" />
+        <path d="M8 9h.01M12 9h.01M16 9h.01" />
       </svg>
     ),
   },
   {
-    title: 'Cakupan Nasional',
+    title: 'Jangkauan Nasional',
     body: 'Terintegrasi dengan 38 provinsi dan seluruh kota/kabupaten di Indonesia. Dari Banda Aceh sampai Merauke, satu dashboard.',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -25,8 +27,20 @@ const FEATURES: Feature[] = [
     ),
   },
   {
-    title: '1-Click WhatsApp & Mass Broadcast',
-    body: 'Outreach instan dengan template pesan personalisasi {{business_name}}, {{city}}, dan {{pitch_angle}}. Kirim ke seluruh baris tabel tanpa copy-paste.',
+    title: 'Fleksibilitas Filter Tujuan',
+    body: 'Cari semua bisnis untuk suplai/partnership, atau filter khusus bisnis tanpa website jika kebutuhan Anda menawarkan jasa pembuatan website & transformasi digital.',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 6h16M7 12h10M10 18h4" />
+        <circle cx="8" cy="6" r="1.6" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Outreach Sekali Klik',
+    body: 'Integrasi WhatsApp 1-click & mass broadcast dengan template pesan personalisasi {{business_name}}, {{city}}, dan {{pitch_angle}} untuk tiap tujuan penawaran.',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.5 11.6a8.2 8.2 0 0 1-11.9 7.3L4 20.5l1.7-4.4A8.2 8.2 0 1 1 20.5 11.6z" />
@@ -35,24 +49,13 @@ const FEATURES: Feature[] = [
     ),
   },
   {
-    title: 'LinkedIn Decision Maker Locator',
-    body: 'Lacak profil Owner, Founder, atau Manager lewat Google X-Ray search indexing. Tahu siapa yang harus dihubungi sebelum menawarkan.',
+    title: 'Pencarian Pengambil Keputusan',
+    body: 'Tombol cepat pelacak profil Owner/Founder via LinkedIn X-Ray. Tahu siapa yang harus dihubungi sebelum menawarkan kerja sama atau suplai.',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="7" cy="7" r="3" />
         <circle cx="17" cy="17" r="3" />
         <path d="M9.7 8.6 14.3 15.4M16.2 6.2h4.3v4.3M7.8 17.8H3.5v-4.3" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Kontrol Penggunaan API',
-    body: 'Monitoring kuota Google Cloud transparan di dashboard admin: hit per user, audit log per endpoint, dan peringatan kuota.',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 18a8 8 0 1 1 16 0" />
-        <path d="M12 18l4.2-5.4" />
-        <circle cx="12" cy="18" r="1.2" />
       </svg>
     ),
   },
@@ -67,12 +70,12 @@ const REASONS = [
   {
     metric: '100%',
     title: 'Data dari Google Maps resmi',
-    body: 'Nama, alamat, rating, ulasan, dan nomor telepon diambil dari Google Places API — bukan scraping abal-abal yang cepat basi.',
+    body: 'Nama, alamat, rating, ulasan, nomor telepon, hingga status website diambil dari Google Places API — bukan scraping abal-abal yang cepat basi.',
   },
   {
-    metric: '3x',
-    title: 'Peluang closing lebih tinggi',
-    body: 'Karena Anda hanya menghubungi usaha tanpa website dengan pitch yang sudah disesuaikan jenis bisnisnya.',
+    metric: '4',
+    title: 'Preset pesan siap pakai',
+    body: 'Template jasa web, kemitraan, supplier/grosir, dan layanan profesional. Pilih sudut penawaran yang paling relevan dengan target Anda.',
   },
 ];
 
@@ -82,11 +85,11 @@ export default function Features() {
       <section className="lnd-section" id="fitur">
         <div className="lnd-container">
           <header className="lnd-section-head">
-            <span className="lnd-kicker">Fitur Utama</span>
-            <h2>Satu dashboard untuk seluruh pipeline prospecting Anda</h2>
+            <span className="lnd-kicker">Keunggulan Utama</span>
+            <h2>Kenapa Bisnis, Tim Sales, &amp; Agency Memilih ClientFinder</h2>
             <p>
-              Berhenti menghabiskan kuota waktu untuk riset manual. ClientFinder menyatukan pencarian, penyaringan,
-              penyimpanan lead, dan outreach WhatsApp dalam satu alur.
+              ClientFinder bukan hanya alat pencari bisnis tanpa website. Ini mesin akuisisi prospek B2B yang bisa
+              disesuaikan untuk penjualan, suplai, kemitraan, maupun jasa profesional.
             </p>
           </header>
 
@@ -108,8 +111,8 @@ export default function Features() {
         <div className="lnd-container">
           <header className="lnd-section-head">
             <span className="lnd-kicker">Keunggulan</span>
-            <h2>Kenapa agency dan freelancer memilih ClientFinder</h2>
-            <p>Bukan sekadar daftar nomor. Ini mesin akuisisi klien untuk jasa pembuatan website dan sistem.</p>
+            <h2>Dirancang untuk tim yang butuh pipeline, bukan sekadar daftar nomor</h2>
+            <p>Dari riset pasar sampai chat pertama, seluruh alur prospeksi berjalan dalam satu dashboard.</p>
           </header>
 
           <div className="lnd-reason-grid">

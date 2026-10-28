@@ -11,12 +11,13 @@ export const maxDuration = 120;
 export const runtime = 'nodejs';
 
 const DIRECT_PITCH =
-  'Website profil usaha + katalog produk dan tombol WhatsApp agar calon pelanggan langsung menemukan informasi resmi.';
+  'Peluang kemitraan & suplai: tawarkan produk atau jasa pendukung, cross-promo, atau kerja sama operasional dengan bisnis ini.';
 
 /**
  * POST /api/search
- * Pipeline: auth → validasi → cek kuota → Google Places → filter website →
- * normalisasi WhatsApp → simpan lead (scoped user) → payload bersih.
+ * Pipeline: auth → validasi → cek kuota → Google Places → filter status
+ * website (opsional: all / no_website / has_website) → normalisasi WhatsApp →
+ * simpan lead (scoped user) → payload bersih.
  */
 export async function POST(req: Request) {
   return runApi(async () => {
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       userId: user.id,
       category,
       city: input.city,
+      websiteFilter: input.websiteFilter,
     });
 
     const leads = await saveSearchLeads(user.id, meta.city, prospects);

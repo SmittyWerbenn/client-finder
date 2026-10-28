@@ -5,7 +5,7 @@ import './workspace.css';
 export const metadata: Metadata = {
   title: 'ClientFinder — Prospect Engine',
   description:
-    'Temukan bisnis lokal tanpa website dari Google Places, kelola pipeline lead, dan audit pemakaian API dalam satu platform.',
+    'Mesin pencari prospek dan partner bisnis lokal berbasis Google Places dengan filter status website opsional, pipeline lead, outreach WhatsApp, dan audit pemakaian API dalam satu platform.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

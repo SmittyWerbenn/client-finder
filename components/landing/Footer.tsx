@@ -16,8 +16,8 @@ export default function Footer() {
             </span>
           </Link>
           <p>
-            Mesin pencari prospek bisnis lokal Indonesia. Saring usaha tanpa website, ambil kontak WhatsApp pemilik,
-            lalu jalankan outreach sekali klik.
+            B2B prospecting &amp; partnership engine untuk bisnis lokal Indonesia. Saring prospek sesuai tujuan,
+            ambil kontak WhatsApp pengambil keputusan, lalu jalankan outreach sekali klik.
           </p>
           <a href={waLink(WA_MESSAGES.consult)} target="_blank" rel="noreferrer" className="lnd-footer-wa">
             WhatsApp Admin · 0857-8284-6851
@@ -27,6 +27,7 @@ export default function Footer() {
         <nav className="lnd-footer-col" aria-label="Navigasi produk">
           <h4>Produk</h4>
           <a href="#fitur">Fitur Utama</a>
+          <a href="#skenario">Skenario Penggunaan</a>
           <a href="#kategori">Kategori Bisnis</a>
           <a href="#harga">Harga Lisensi</a>
           <Link href={DEMO_HREF}>Demo Interaktif</Link>

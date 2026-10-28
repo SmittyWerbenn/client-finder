@@ -1,9 +1,12 @@
 # ClientFinder
 
-Platform prospecting untuk menemukan bisnis lokal yang **belum punya website**
-melalui Google Places API, mengelola pipeline lead, melakukan outreach WhatsApp,
-dan mengaudit setiap pemakaian API — dengan RBAC tiga level (Superadmin, Admin,
-User) dan dukungan database **SQLite maupun PostgreSQL**.
+Platform **B2B prospecting & partnership engine** untuk menemukan calon klien dan
+partner bisnis lokal melalui Google Places API, mengelola pipeline lead, melakukan
+outreach WhatsApp multi-tujuan, dan mengaudit setiap pemakaian API — dengan RBAC
+tiga level (Superadmin, Admin, User) dan dukungan database **SQLite maupun PostgreSQL**.
+
+Filter status website bersifat **opsional**: semua bisnis (partnership/suplai),
+khusus tanpa website (jasa web/digitalisasi), atau khusus yang sudah punya website.
 
 Dokumen arsitektur lengkap (diagram alur, matriks RBAC, skema, deployment):
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
@@ -13,9 +16,11 @@ Dokumen arsitektur lengkap (diagram alur, matriks RBAC, skema, deployment):
 ## Fitur
 
 - **Pencarian prospek** dari Google Places Text Search (`"<keyword> di <kota>"`),
-  pagination 20/halaman, plafon 100 prospek tanpa website per pencarian.
-- **Filter wajib tanpa website** + Place Details terbatas untuk melengkapi
-  nomor telepon.
+  pagination 20/halaman, plafon 100 prospek per pencarian.
+- **Filter status website opsional** (`all` / `no_website` / `has_website`) +
+  Place Details terbatas untuk melengkapi nomor telepon.
+- **Pitch angle adaptif**: bisnis tanpa website mendapat angle digitalisasi,
+  bisnis yang sudah online mendapat angle kemitraan/suplai.
 - **Normalisasi nomor** ke format WhatsApp internasional (`62xxx`) dan dedupe
   `placeId`.
 - **Pipeline lead** (New → Contacted → Interested → Closed) tersimpan di
@@ -191,7 +196,7 @@ E2E_SUPERADMIN_EMAIL=<email-seed> E2E_SUPERADMIN_PASSWORD=<password-seed> \
 ```
 
 Skenario E2E mencakup login/RBAC (403 admin/user), isolasi kategori,
-pagination + filter website, normalisasi nomor, batas 100 prospek, counter hit
+pagination + filter status website, normalisasi nomor, batas 100 prospek, counter hit
 atomik, audit log per endpoint, update status, export CSV, dan pencabutan sesi
 saat logout. Jalankan pada database kosong (reset `DATABASE_URL` bila perlu).
 

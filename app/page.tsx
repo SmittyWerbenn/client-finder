@@ -7,17 +7,18 @@ import Hero from '@/components/landing/Hero';
 import Navbar from '@/components/landing/Navbar';
 import Niches from '@/components/landing/Niches';
 import Pricing from '@/components/landing/Pricing';
+import UseCases from '@/components/landing/UseCases';
 import './landing.css';
 
 export const metadata: Metadata = {
-  title: 'ClientFinder — Prospect Engine Bisnis Lokal Tanpa Website',
+  title: 'ClientFinder — B2B Prospecting & Partnership Engine Bisnis Lokal',
   description:
-    'Temukan ribuan calon klien bisnis lokal siap beli tanpa riset manual. Saring usaha tanpa website di 38 provinsi Indonesia, ambil kontak WhatsApp langsung, dan kirim penawaran sekali klik.',
+    'Temukan ribuan calon klien dan partner bisnis lokal siap kolaborasi tanpa riset manual. Saring bisnis di 38 provinsi Indonesia, dapatkan kontak decision maker, dan jalankan outreach WhatsApp sekali klik.',
   alternates: { canonical: 'https://client-finder.frel.cloud' },
   openGraph: {
-    title: 'ClientFinder — Prospect Engine Bisnis Lokal',
+    title: 'ClientFinder — B2B Prospecting & Partnership Engine',
     description:
-      'Mesin pencari prospek berbasis Google Maps: filter bisnis tanpa website, kontak WhatsApp langsung pemilik, outreach massal sekali klik.',
+      'Mesin pencari prospek B2B berbasis Google Maps: filter status website fleksibel, kontak WhatsApp langsung, template kemitraan/suplai, outreach massal sekali klik.',
     url: 'https://client-finder.frel.cloud',
     siteName: 'ClientFinder',
     locale: 'id_ID',
@@ -28,9 +29,9 @@ export const metadata: Metadata = {
 const productSchema = {
   '@context': 'https://schema.org',
   '@type': 'Product',
-  name: 'ClientFinder — Prospect Engine',
+  name: 'ClientFinder — B2B Prospecting & Partnership Engine',
   description:
-    'Mesin pencari prospek bisnis lokal Indonesia berbasis Google Maps dengan filter bisnis tanpa website, kontak WhatsApp langsung, dan outreach massal.',
+    'Mesin pencari prospek dan partner bisnis lokal Indonesia berbasis Google Maps dengan filter status website opsional (semua bisnis, tanpa website, atau sudah punya website), kontak WhatsApp langsung, dan outreach multi-tujuan.',
   brand: { '@type': 'Brand', name: 'ClientFinder' },
   offers: [
     {
@@ -57,6 +58,7 @@ export default function LandingPage() {
       <main>
         <Hero />
         <Features />
+        <UseCases />
         <Niches />
         <Pricing />
         <CustomCallout />

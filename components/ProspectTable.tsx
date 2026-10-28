@@ -13,6 +13,14 @@ import {
 
 const PAGE_SIZE = 20;
 
+function websiteHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  }
+}
+
 export default function ProspectTable({
   rows,
   totalCount,
@@ -85,7 +93,7 @@ export default function ProspectTable({
       <div className="card-head results-head">
         <div className="results-title">
           <strong>{totalCount} prospek</strong>
-          <span className="cell-sub">{note ?? 'Tanpa website · siap dihubungi'}</span>
+          <span className="cell-sub">{note ?? 'Data prospek · siap dihubungi'}</span>
         </div>
 
         <div className="pipeline-chips" role="group" aria-label="Filter status pipeline">
@@ -135,7 +143,7 @@ export default function ProspectTable({
             <tbody>
               {Array.from({ length: 6 }).map((_, index) => (
                 <tr key={index} className="skeleton-row">
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="skeleton-bar" />
                   </td>
                 </tr>
@@ -148,8 +156,8 @@ export default function ProspectTable({
           <div className="icon">⌕</div>
           <h3>Belum ada prospek yang cocok</h3>
           <p>
-            Jalankan pencarian baru, longgarkan filter rating/ulasan, atau matikan filter nomor telepon. Filter
-            &quot;tanpa website&quot; selalu aktif.
+            Jalankan pencarian baru, longgarkan filter rating/ulasan, atau ubah filter status website. Filter
+            &quot;tanpa website&quot; hanya opsional, bukan syarat sistem.
           </p>
         </div>
       ) : (
@@ -159,6 +167,7 @@ export default function ProspectTable({
               <thead>
                 <tr>
                   <th>Bisnis</th>
+                  <th>Website</th>
                   <th>Kategori</th>
                   <th>Rating</th>
                   <th>Kontak</th>
@@ -185,6 +194,34 @@ export default function ProspectTable({
                             </>
                           ) : null}
                         </div>
+                      </td>
+                      <td data-label="Website">
+                        {row.website ? (
+                          <a
+                            className="web-link"
+                            href={row.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={row.website}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="13"
+                              height="13"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="8.5" />
+                              <path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.3 3.6 8.5S14.4 18.2 12 20.5c-2.4-2.3-3.6-5.3-3.6-8.5S9.6 5.8 12 3.5z" />
+                            </svg>
+                            {websiteHost(row.website)}
+                          </a>
+                        ) : (
+                          <span className="web-badge">Belum Ada Web</span>
+                        )}
                       </td>
                       <td data-label="Kategori">
                         <span className="chip">{row.subCategory}</span>

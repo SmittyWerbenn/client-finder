@@ -29,20 +29,20 @@ export default async function LoginPage({
 
         <div className="auth-copy">
           <h2 className="auth-headline">
-            Temukan bisnis yang <span>belum punya website</span>.
+            Temukan calon klien &amp; <span>partner bisnis lokal</span>.
           </h2>
           <p className="auth-lede">
-            Data diambil langsung dari Google Places, difilter otomatis, lalu disiapkan menjadi daftar
+            Data diambil langsung dari Google Places, disaring sesuai tujuan Anda, lalu disiapkan menjadi daftar
             prospek siap dihubungi lewat WhatsApp.
           </p>
           <ul className="auth-points">
             <li>
               <span className="dot">1</span>
-              <span>Filter ketat: usaha yang sudah punya website otomatis dibuang.</span>
+              <span>Filter status website fleksibel: semua bisnis, tanpa website, atau sudah punya website.</span>
             </li>
             <li>
               <span className="dot">2</span>
-              <span>Pitch angle siap pakai sesuai jenis usaha, bukan template generik.</span>
+              <span>Pitch angle siap pakai sesuai jenis usaha dan tujuan penawaran, bukan template generik.</span>
             </li>
             <li>
               <span className="dot">3</span>

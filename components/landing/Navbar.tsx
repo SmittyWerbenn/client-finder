@@ -6,7 +6,7 @@ import { DEMO_HREF, LOGIN_HREF } from '@/lib/site';
 
 const LINKS = [
   { href: '#fitur', label: 'Fitur Utama' },
-  { href: '#keunggulan', label: 'Keunggulan' },
+  { href: '#skenario', label: 'Skenario' },
   { href: '#kategori', label: 'Kategori Bisnis' },
   { href: '#harga', label: 'Harga Lisensi' },
   { href: '#custom', label: 'Custom System' },

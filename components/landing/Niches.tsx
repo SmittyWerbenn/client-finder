@@ -48,8 +48,8 @@ export default function Niches() {
           <span className="lnd-kicker">Kategori Bisnis</span>
           <h2>Niche siap jual, lengkap dengan angle penawarannya</h2>
           <p>
-            Setiap kategori punya <em>pitch angle</em> bawaan yang sudah disesuaikan dengan masalah operasional bisnis
-            tersebut. Tinggal pilih, cari, dan kirim.
+            Setiap kategori punya <em>pitch angle</em> bawaan yang disesuaikan dengan kebutuhan operasional bisnis
+            tersebut. Pilih kategori, tentukan tujuan penawaran, lalu kirim.
           </p>
         </header>
 

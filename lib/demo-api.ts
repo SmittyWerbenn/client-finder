@@ -51,11 +51,21 @@ function demoSearch(body: Record<string, unknown>): SearchResponse {
   const mode = body.mode === 'name' ? 'name' : 'category';
   const categoryId = String(body.categoryId ?? '');
   const nameQuery = String(body.name ?? '').trim();
+  const websiteFilter =
+    body.websiteFilter === 'no_website' || body.websiteFilter === 'has_website'
+      ? body.websiteFilter
+      : 'all';
 
-  const pool =
+  const basePool =
     mode === 'name'
       ? DEMO_LEADS.filter((lead) => lead.name.toLowerCase().includes(nameQuery.toLowerCase()))
       : DEMO_LEADS.filter((lead) => lead.categoryId === categoryId);
+
+  const pool = basePool.filter((lead) => {
+    if (websiteFilter === 'no_website') return !lead.website;
+    if (websiteFilter === 'has_website') return Boolean(lead.website);
+    return true;
+  });
 
   const leads: Lead[] = pool.map((lead) => ({
     ...lead,
@@ -76,8 +86,10 @@ function demoSearch(body: Record<string, unknown>): SearchResponse {
     city,
     query: `"${keyword} di ${city}"`,
     limit: 20,
-    scanned: 46 + leads.length,
-    skippedWithWebsite: 28,
+    scanned: 46 + basePool.length,
+    skippedWithWebsite: websiteFilter === 'no_website' ? basePool.filter((lead) => lead.website).length : 0,
+    skippedWithoutWebsite: websiteFilter === 'has_website' ? basePool.filter((lead) => !lead.website).length : 0,
+    websiteFilter,
     totalQualified: leads.length,
     pagesScanned: 3,
     capped: false,
@@ -99,7 +111,7 @@ function demoExport(body: Record<string, unknown>): { csv: string; fileName: str
   const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
   const rows = DEMO_LEADS.filter((lead) => ids.some((id) => id.startsWith(lead.id)));
 
-  const header = ['Nama', 'Kota', 'Alamat', 'WhatsApp', 'Rating', 'Ulasan', 'Sektor', 'Sub Kategori', 'Status', 'Maps'];
+  const header = ['Nama', 'Kota', 'Alamat', 'WhatsApp', 'Website', 'Rating', 'Ulasan', 'Sektor', 'Sub Kategori', 'Status', 'Maps'];
   const escape = (value: string | number | null) => `"${String(value ?? '').replace(/"/g, '""')}"`;
   const lines = [header.join(',')];
   for (const lead of rows) {
@@ -109,6 +121,7 @@ function demoExport(body: Record<string, unknown>): { csv: string; fileName: str
         lead.city ?? '',
         lead.address,
         lead.phoneDisplay ?? '',
+        lead.website ?? '',
         lead.rating ?? '',
         lead.reviews,
         lead.sector,

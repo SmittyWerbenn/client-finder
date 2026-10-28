@@ -41,6 +41,12 @@ export type Lead = Prospect & {
   source: 'SEARCH' | 'MANUAL';
 };
 
+/**
+ * Filter keberadaan website — opsional, bukan lagi kewajiban sistem.
+ * `all` dipakai untuk partnership/suplai, `no_website` untuk jualan jasa web.
+ */
+export type WebsiteFilter = 'all' | 'no_website' | 'has_website';
+
 export type SearchMeta = {
   sector: string;
   subCategory: string;
@@ -50,7 +56,11 @@ export type SearchMeta = {
   query: string;
   limit: number;
   scanned: number;
+  /** Tempat yang dibuang karena sudah punya website (filter no_website). */
   skippedWithWebsite: number;
+  /** Tempat yang dibuang karena belum punya website (filter has_website). */
+  skippedWithoutWebsite: number;
+  websiteFilter: WebsiteFilter;
   totalQualified: number;
   pagesScanned: number;
   capped: boolean;

@@ -12,12 +12,13 @@ const HEADERS = [
   'Sektor',
   'No. Telepon',
   'WhatsApp (wa.me)',
+  'Website',
   'Alamat Lengkap',
   'Kota',
   'Rating',
   'Jumlah Ulasan',
   'Google Maps',
-  'Pitch Angle / Rekomendasi Fitur Web',
+  'Pitch Angle / Rekomendasi',
   'Status Pipeline',
 ];
 
@@ -37,6 +38,7 @@ export function buildProspectCsv(rows: Prospect[], statuses?: Record<string, str
         escapeCell(r.sector),
         escapeCell(r.phoneDisplay ?? ''),
         escapeCell(r.whatsapp ? `https://wa.me/${r.whatsapp}` : ''),
+        escapeCell(r.website ?? ''),
         escapeCell(r.address),
         escapeCell(r.city ?? ''),
         escapeCell(r.rating ?? ''),

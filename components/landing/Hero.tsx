@@ -4,14 +4,14 @@ import { DEMO_HREF, WA_MESSAGES, waLink } from '@/lib/site';
 const STATS = [
   { value: '38', label: 'Provinsi' },
   { value: '514', label: 'Kota & Kabupaten' },
-  { value: '4+', label: 'Niche siap jual' },
+  { value: '3', label: 'Filter status web' },
   { value: '1', label: 'Klik ke WhatsApp' },
 ];
 
 const PREVIEW_ROWS = [
-  { name: 'Padel Arena Buah Batu', meta: '4.6 ★ · 128 ulasan', status: 'Interested', tone: 'warm' },
-  { name: 'Kopi Rindu Senja', meta: '4.5 ★ · 312 ulasan', status: 'New', tone: 'new' },
-  { name: 'Konveksi Sablon Kaos Kita', meta: '4.4 ★ · 64 ulasan', status: 'Contacted', tone: 'cold' },
+  { name: 'Padel Arena Buah Batu', meta: '4.6 ★ · 128 ulasan', status: 'Interested', tone: 'warm', web: false },
+  { name: 'Kopi Rindu Senja', meta: '4.5 ★ · 312 ulasan', status: 'New', tone: 'new', web: true },
+  { name: 'Konveksi Sablon Kaos Kita', meta: '4.4 ★ · 64 ulasan', status: 'Contacted', tone: 'cold', web: false },
 ];
 
 export default function Hero() {
@@ -24,17 +24,18 @@ export default function Hero() {
         <div className="lnd-hero-copy">
           <span className="lnd-eyebrow">
             <span className="lnd-dot" aria-hidden="true" />
-            Prospect engine untuk agency, freelancer &amp; web studio
+            B2B prospecting &amp; partnership engine untuk bisnis lokal
           </span>
 
           <h1>
-            Temukan Ribuan Calon Klien Bisnis Lokal Siap Beli{' '}
-            <span className="lnd-grad">Tanpa Repot Riset Manual.</span>
+            Temukan Ribuan Calon Klien &amp; Partner Bisnis Lokal Siap Kolaborasi{' '}
+            <span className="lnd-grad">Tanpa Riset Manual.</span>
           </h1>
 
           <p className="lnd-hero-sub">
-            Mesin pencari prospek otomatis berbasis Google Maps. Saring bisnis lokal di seluruh Indonesia yang belum
-            memiliki website, dapatkan kontak WhatsApp langsung pemiliknya, dan jalankan outreach sekali klik.
+            Mesin pencari prospek B2B berbasis Google Maps untuk menyaring bisnis lokal terverifikasi di seluruh
+            Indonesia. Dapatkan kontak pengambil keputusan (decision maker), jalin kemitraan, atau tawarkan produk
+            &amp; jasa Anda secara terarah.
           </p>
 
           <div className="lnd-cta-row">
@@ -79,6 +80,13 @@ export default function Hero() {
                   <small>Kota</small>
                   <div className="lnd-fake-input">Kota Bandung</div>
                 </div>
+                <div className="lnd-preview-wide">
+                  <small>Status website target</small>
+                  <div className="lnd-fake-input lnd-fake-select">
+                    Semua bisnis · partnership &amp; supplier
+                    <span aria-hidden="true">▾</span>
+                  </div>
+                </div>
                 <span className="lnd-fake-btn">Cari Prospek</span>
               </div>
 
@@ -87,7 +95,9 @@ export default function Hero() {
                   <div key={row.name} className="lnd-preview-row">
                     <div className="lnd-preview-info">
                       <b>{row.name}</b>
-                      <small>{row.meta} · tanpa website</small>
+                      <small>
+                        {row.meta} · {row.web ? 'sudah punya website' : 'belum ada website'}
+                      </small>
                     </div>
                     <span className={`lnd-pv-badge ${row.tone}`}>{row.status}</span>
                     <span className="lnd-pv-wa">WA</span>
@@ -97,10 +107,10 @@ export default function Hero() {
 
               <div className="lnd-preview-foot">
                 <span>
-                  <b>18</b> prospek tanpa website
+                  <b>18</b> prospek siap dihubungi
                 </span>
                 <span>
-                  <b>34</b> usaha ber-website dibuang
+                  <b>3</b> pilihan filter website
                 </span>
               </div>
             </div>
@@ -110,7 +120,7 @@ export default function Hero() {
             <span className="lnd-float-icon">WA</span>
             <div>
               <b>Broadcast siap kirim</b>
-              <small>{'Template personalisasi {{business_name}} & {{city}}'}</small>
+              <small>{'4 preset: web, partnership, supplier, layanan'}</small>
             </div>
           </div>
         </div>

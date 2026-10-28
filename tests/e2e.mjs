@@ -154,10 +154,11 @@ const placesStats = await fetch(PLACES_STATS).then((r) => r.json());
 res = await request('/api/search', {
   token: userToken,
   method: 'POST',
-  body: { mode: 'category', categoryId: userCategoryId, city: 'Jakarta Selatan' },
+  body: { mode: 'category', categoryId: userCategoryId, city: 'Jakarta Selatan', websiteFilter: 'no_website' },
 });
 ok(res.status === 200, 'pencarian user berhasil', `status ${res.status}`);
 const data = res.json.data;
+ok(data.meta.websiteFilter === 'no_website', 'filter website dari request diteruskan ke meta', `${data.meta.websiteFilter}`);
 ok(data.meta.pagesScanned === 6 && data.meta.scanned === 120, 'pagination 6 halaman × 20', `${data.meta.pagesScanned}/${data.meta.scanned}`);
 ok(data.leads.length === 79, 'filter website + detail dedupe menyisakan 79 prospek', `${data.leads.length}`);
 ok(data.meta.skippedWithWebsite === 41, 'website dibuang total 41', `${data.meta.skippedWithWebsite}`);

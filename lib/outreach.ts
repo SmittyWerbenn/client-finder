@@ -1,6 +1,6 @@
 import templatesSeed from '@/data/templates.json';
 import { normalizePhone } from './phone';
-import type { LeadStatus, Prospect } from './types';
+import type { LeadStatus, Prospect, WebsiteFilter } from './types';
 
 /** Utilitas outreach: template WhatsApp, deep link wa.me, LinkedIn X-Ray. */
 
@@ -14,9 +14,43 @@ export type ProspectFilters = {
   phoneOnly: boolean;
   minRating: number;
   minReviews: number;
+  websiteFilter: WebsiteFilter;
 };
 
-export const DEFAULT_FILTERS: ProspectFilters = { phoneOnly: false, minRating: 0, minReviews: 0 };
+export const DEFAULT_FILTERS: ProspectFilters = {
+  phoneOnly: false,
+  minRating: 0,
+  minReviews: 0,
+  websiteFilter: 'all',
+};
+
+export const WEBSITE_FILTER_OPTIONS: { value: WebsiteFilter; label: string; short: string }[] = [
+  {
+    value: 'all',
+    label: 'Semua Bisnis (rekomendasi partnership & supplier)',
+    short: 'Semua bisnis',
+  },
+  {
+    value: 'no_website',
+    label: 'Khusus tanpa website (penawaran jasa web / digitalisasi)',
+    short: 'Tanpa website',
+  },
+  {
+    value: 'has_website',
+    label: 'Khusus yang sudah punya website',
+    short: 'Sudah punya website',
+  },
+];
+
+export function websiteFilterLabel(filter: WebsiteFilter): string {
+  return WEBSITE_FILTER_OPTIONS.find((option) => option.value === filter)?.short ?? 'Semua bisnis';
+}
+
+/** Pitch angle netral untuk bisnis yang sudah online (partnership / suplai). */
+export function partnershipPitch(subCategory: string, city: string): string {
+  const scope = subCategory.toLowerCase();
+  return `Peluang kemitraan & suplai untuk ${scope} di ${city}: tawarkan produk atau jasa pendukung, cross-promo, atau kerja sama operasional.`;
+}
 
 export const LEAD_STATUSES: { value: LeadStatus; label: string; hint: string }[] = [
   { value: 'New', label: 'New', hint: 'Baru masuk daftar prospek' },
@@ -70,7 +104,8 @@ export function linkedInXrayUrl(businessName: string, city: string): string {
 }
 
 export function matchesFilters(lead: Prospect, filters: ProspectFilters): boolean {
-  if (lead.website) return false;
+  if (filters.websiteFilter === 'no_website' && lead.website) return false;
+  if (filters.websiteFilter === 'has_website' && !lead.website) return false;
   if (filters.phoneOnly && !normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw)) return false;
   if (filters.minRating > 0 && (lead.rating ?? 0) < filters.minRating) return false;
   if (filters.minReviews > 0 && lead.reviews < filters.minReviews) return false;

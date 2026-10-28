@@ -17,6 +17,7 @@ export const searchSchema = z
     categoryId: z.string().trim().max(80).optional(),
     name: z.string().trim().max(80).optional(),
     city: shortText('Kota', 2, 80),
+    websiteFilter: z.enum(['all', 'no_website', 'has_website']).default('all'),
     refresh: z.boolean().optional().default(false),
   })
   .superRefine((value, ctx) => {

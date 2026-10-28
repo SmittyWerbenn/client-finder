@@ -1,4 +1,5 @@
 import { DEFAULT_CATEGORIES } from './seed';
+import { partnershipPitch } from './outreach';
 import type { SessionUser } from './auth';
 import type { Category, Lead, LeadStatus, PublicUser, UsageLogEntry, UsageOverview, UsageSnapshot } from './types';
 
@@ -47,26 +48,28 @@ type Seed = {
   rating: number;
   reviews: number;
   status: LeadStatus;
+  /** Sebagian prospek demo sudah online supaya filter website terasa nyata. */
+  website?: string;
 };
 
 const SEEDS: Seed[] = [
   { id: 'dl-01', categoryId: 'padel-futsal-badminton', name: 'Padel Arena Buah Batu', area: 'Buah Batu', city: 'Kota Bandung', phone: '6281222011177', rating: 4.6, reviews: 128, status: 'Interested' },
-  { id: 'dl-02', categoryId: 'padel-futsal-badminton', name: 'Futsal Kingdom Margonda', area: 'Margonda', city: 'Kota Depok', phone: '6281388944120', rating: 4.4, reviews: 76, status: 'New' },
+  { id: 'dl-02', categoryId: 'padel-futsal-badminton', name: 'Futsal Kingdom Margonda', area: 'Margonda', city: 'Kota Depok', phone: '6281388944120', rating: 4.4, reviews: 76, status: 'New', website: 'https://futsalkingdom.id' },
   { id: 'dl-03', categoryId: 'padel-futsal-badminton', name: 'GOR Badminton Smash Center', area: 'Jatiasih', city: 'Kota Bekasi', phone: '6281299003451', rating: 4.3, reviews: 54, status: 'Contacted' },
   { id: 'dl-04', categoryId: 'studio-senam-yoga-gym', name: 'Yoga Studio Savasana', area: 'Sinduadi', city: 'Kab. Sleman', phone: '6281122345678', rating: 4.8, reviews: 91, status: 'New' },
-  { id: 'dl-05', categoryId: 'studio-senam-yoga-gym', name: 'Gym Fit Factory', area: 'Galaxy', city: 'Kota Bekasi', phone: '6281577800213', rating: 4.2, reviews: 143, status: 'Interested' },
-  { id: 'dl-06', categoryId: 'ruang-acara-creative-space', name: 'Kreativa Space Kemang', area: 'Kemang', city: 'Jakarta Selatan', phone: '6281808900124', rating: 4.7, reviews: 47, status: 'Closed' },
-  { id: 'dl-07', categoryId: 'restoran-keluarga-kafe-event', name: 'Kopi Rindu Senja', area: 'Dago', city: 'Kota Bandung', phone: '6281366778812', rating: 4.5, reviews: 312, status: 'Interested' },
+  { id: 'dl-05', categoryId: 'studio-senam-yoga-gym', name: 'Gym Fit Factory', area: 'Galaxy', city: 'Kota Bekasi', phone: '6281577800213', rating: 4.2, reviews: 143, status: 'Interested', website: 'https://fitfactory.co.id' },
+  { id: 'dl-06', categoryId: 'ruang-acara-creative-space', name: 'Kreativa Space Kemang', area: 'Kemang', city: 'Jakarta Selatan', phone: '6281808900124', rating: 4.7, reviews: 47, status: 'Closed', website: 'https://kreativaspace.com' },
+  { id: 'dl-07', categoryId: 'restoran-keluarga-kafe-event', name: 'Kopi Rindu Senja', area: 'Dago', city: 'Kota Bandung', phone: '6281366778812', rating: 4.5, reviews: 312, status: 'Interested', website: 'https://kopirindusenja.id' },
   { id: 'dl-08', categoryId: 'restoran-keluarga-kafe-event', name: 'Warung Sunda Cibiuk', area: 'Harapan Indah', city: 'Kota Bekasi', phone: '6281299887711', rating: 4.4, reviews: 208, status: 'New' },
   { id: 'dl-09', categoryId: 'restoran-keluarga-kafe-event', name: 'Kafe Teras Kayu', area: 'Banyumanik', city: 'Kota Semarang', phone: '6281222556690', rating: 4.6, reviews: 164, status: 'Contacted' },
   { id: 'dl-10', categoryId: 'catering-pernikahan-nasi-box', name: 'Dapur Bu Siti Catering', area: 'Rungkut', city: 'Kota Surabaya', phone: '6281233445566', rating: 4.7, reviews: 87, status: 'Interested' },
-  { id: 'dl-11', categoryId: 'catering-pernikahan-nasi-box', name: 'Nasi Box Berkah Jaya', area: 'Setiabudi', city: 'Kota Medan', phone: '6281377009912', rating: 4.3, reviews: 62, status: 'New' },
+  { id: 'dl-11', categoryId: 'catering-pernikahan-nasi-box', name: 'Nasi Box Berkah Jaya', area: 'Setiabudi', city: 'Kota Medan', phone: '6281377009912', rating: 4.3, reviews: 62, status: 'New', website: 'https://berkahjaya.co.id' },
   { id: 'dl-12', categoryId: 'resto-produk-kemasan', name: 'Sambal Nusantara Bu Rini', area: 'Gubeng', city: 'Kota Surabaya', phone: '6281255887733', rating: 4.8, reviews: 129, status: 'Closed' },
   { id: 'dl-13', categoryId: 'toko-mebel-furniture', name: 'Jati Asri Furniture', area: 'Pedurungan', city: 'Kota Semarang', phone: '6281244556621', rating: 4.5, reviews: 73, status: 'New' },
-  { id: 'dl-14', categoryId: 'toko-bahan-bangunan-besi', name: 'Toko Besi Sumber Rejeki', area: 'Cikarang', city: 'Kab. Bekasi', phone: '6281311882200', rating: 4.1, reviews: 38, status: 'Contacted' },
+  { id: 'dl-14', categoryId: 'toko-bahan-bangunan-besi', name: 'Toko Besi Sumber Rejeki', area: 'Cikarang', city: 'Kab. Bekasi', phone: '6281311882200', rating: 4.1, reviews: 38, status: 'Contacted', website: 'https://sumberrejekibesi.com' },
   { id: 'dl-15', categoryId: 'florist-toko-buket', name: 'Buket Bunga Rania', area: 'Antapani', city: 'Kota Bandung', phone: '6281277334455', rating: 4.9, reviews: 156, status: 'New' },
   { id: 'dl-16', categoryId: 'konveksi-sablon-merchandise', name: 'Konveksi Sablon Kaos Kita', area: 'Cimahi', city: 'Kota Cimahi', phone: '6281322667788', rating: 4.4, reviews: 64, status: 'Interested' },
-  { id: 'dl-17', categoryId: 'bengkel-detailing-carwash', name: 'Bengkel Auto Detailing Kilat', area: 'Wonokromo', city: 'Kota Surabaya', phone: '6281288990022', rating: 4.6, reviews: 112, status: 'New' },
+  { id: 'dl-17', categoryId: 'bengkel-detailing-carwash', name: 'Bengkel Auto Detailing Kilat', area: 'Wonokromo', city: 'Kota Surabaya', phone: '6281288990022', rating: 4.6, reviews: 112, status: 'New', website: 'https://autodetailingkilat.id' },
   { id: 'dl-18', categoryId: 'klinik-hewan-pet-care', name: 'Klinik Hewan Paw Care', area: 'Renon', city: 'Kota Denpasar', phone: '6281333778899', rating: 4.7, reviews: 95, status: 'Contacted' },
 ];
 
@@ -86,13 +89,15 @@ export const DEMO_LEADS: DemoLead[] = SEEDS.map((seed) => {
     phoneRaw: seed.phone,
     phoneDisplay: displayPhone(seed.phone),
     whatsapp: seed.phone,
-    website: null,
+    website: seed.website ?? null,
     rating: seed.rating,
     reviews: seed.reviews,
     mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${seed.name} ${seed.city}`)}`,
     sector,
     subCategory,
-    pitch: category?.pitch ?? 'Website profil + katalog digital untuk mempercepat calon pelanggan menghubungi bisnis.',
+    pitch: seed.website
+      ? partnershipPitch(subCategory, seed.city)
+      : category?.pitch ?? 'Website profil + katalog digital untuk mempercepat calon pelanggan menghubungi bisnis.',
     status: seed.status,
     source: 'SEARCH',
   };

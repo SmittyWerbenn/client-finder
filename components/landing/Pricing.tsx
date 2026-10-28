@@ -15,13 +15,14 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     name: 'STARTER PASS',
-    tagline: 'Cocok untuk freelancer yang baru mulai jualan jasa website.',
+    tagline: 'Cocok untuk freelancer atau tim sales kecil yang baru memulai prospecting.',
     price: 'Rp 199.000',
     priceNote: 'Top-up / sekali beli',
     quota: '5x Sesi Pencarian (hingga 250 kontak leads)',
     features: [
       'Akses basis data 38 provinsi se-Indonesia',
-      'Filter otomatis bisnis tanpa website',
+      'Filter status website fleksibel (semua / tanpa / sudah punya)',
+      '4 preset template WhatsApp multi-tujuan',
       'Export data ke CSV',
       '1-Click Direct WhatsApp',
     ],
@@ -30,7 +31,7 @@ const PLANS: Plan[] = [
   },
   {
     name: 'AGENCY PRO',
-    tagline: 'Paling pas untuk agency dan web studio yang prospecting tiap hari.',
+    tagline: 'Paling pas untuk agency, supplier, dan tim partnership yang prospecting tiap hari.',
     price: 'Rp 499.000',
     priceNote: 'Top-up / sekali beli',
     quota: '15x Sesi Pencarian (hingga 1.000 kontak leads)',

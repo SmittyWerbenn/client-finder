@@ -1,8 +1,9 @@
 import { config } from './config';
 import { recordApiHit, type PlacesEndpoint } from './api-tracker';
 import { HttpError } from './errors';
+import { partnershipPitch } from './outreach';
 import { normalizePhone } from './phone';
-import type { Prospect, SearchMeta } from './types';
+import type { Prospect, SearchMeta, WebsiteFilter } from './types';
 
 /**
  * Integrasi Google Places API (New) — hanya dipanggil dari server.
@@ -10,7 +11,8 @@ import type { Prospect, SearchMeta } from './types';
  * Pipeline:
  * 1. Text Search `<keyword> di <kota>` (20 hasil/halaman, nextPageToken
  *    dengan jeda minimal 2,5 dtk).
- * 2. Buang semua place yang punya `websiteUri` (filter wajib).
+ * 2. Terapkan filter status website sesuai pilihan user — `all` (default,
+ *    untuk partnership/suplai), `no_website`, atau `has_website`.
  * 3. Untuk place tanpa nomor telepon, Place Details (field mask minimal)
  *    dijalankan terbatas `PLACES_DETAILS_MAX` per pencarian.
  * 4. Nomor dinormalisasi ke format WhatsApp 62xxx, duplikat placeId dibuang.
@@ -72,6 +74,8 @@ export type SearchInput = {
   userId: string;
   category: SearchCategoryInput;
   city: string;
+  /** Default `all`: tanpa penyaringan website (partnership/suplai). */
+  websiteFilter?: WebsiteFilter;
 };
 
 export type SearchOutput = {
@@ -88,6 +92,13 @@ export function hasWebsite(place: GooglePlace): boolean {
   return typeof place.websiteUri === 'string' && place.websiteUri.trim() !== '';
 }
 
+/** Apakah nilai website (string/null) lolos filter yang dipilih user. */
+export function matchesWebsiteFilter(website: string | null, filter: WebsiteFilter): boolean {
+  if (filter === 'no_website') return !website;
+  if (filter === 'has_website') return Boolean(website);
+  return true;
+}
+
 function placeIdOf(place: GooglePlace): string {
   return (
     place.id?.trim() ||
@@ -97,6 +108,7 @@ function placeIdOf(place: GooglePlace): string {
 
 export function toProspect(place: GooglePlace, category: SearchCategoryInput, city: string): Prospect {
   const phone = normalizePhone(place.internationalPhoneNumber || place.nationalPhoneNumber || null);
+  const website = place.websiteUri?.trim() || null;
   return {
     placeId: placeIdOf(place),
     name: place.displayName?.text?.trim() || 'Tanpa nama',
@@ -105,7 +117,7 @@ export function toProspect(place: GooglePlace, category: SearchCategoryInput, ci
     phoneRaw: phone?.raw ?? place.nationalPhoneNumber ?? place.internationalPhoneNumber ?? null,
     phoneDisplay: phone?.display ?? place.nationalPhoneNumber ?? null,
     whatsapp: phone?.wa ?? null,
-    website: place.websiteUri?.trim() || null,
+    website,
     rating: typeof place.rating === 'number' ? Math.round(place.rating * 10) / 10 : null,
     reviews: typeof place.userRatingCount === 'number' ? place.userRatingCount : 0,
     mapsUrl:
@@ -115,7 +127,8 @@ export function toProspect(place: GooglePlace, category: SearchCategoryInput, ci
       )}`,
     sector: category.sector,
     subCategory: category.subCategory,
-    pitch: category.pitch,
+    // Bisnis yang sudah online dapat angle kemitraan/suplai, bukan jasa web.
+    pitch: website ? partnershipPitch(category.subCategory, city) : category.pitch,
   };
 }
 
@@ -285,12 +298,14 @@ export async function searchProspects(input: SearchInput): Promise<SearchOutput>
   }
 
   const city = input.city.trim();
+  const websiteFilter = input.websiteFilter ?? 'all';
   const query = `${input.category.keyword} di ${city}`;
 
   const collected = new Map<string, Prospect>();
   let pageToken: string | null = null;
   let scanned = 0;
   let skippedWithWebsite = 0;
+  let skippedWithoutWebsite = 0;
   let pagesScanned = 0;
   let capped = false;
 
@@ -303,8 +318,9 @@ export async function searchProspects(input: SearchInput): Promise<SearchOutput>
     scanned += places.length;
 
     for (const place of places) {
-      if (hasWebsite(place)) {
-        skippedWithWebsite += 1;
+      if (!matchesWebsiteFilter(place.websiteUri?.trim() || null, websiteFilter)) {
+        if (hasWebsite(place)) skippedWithWebsite += 1;
+        else skippedWithoutWebsite += 1;
         continue;
       }
       const prospect = toProspect(place, input.category, city);
@@ -330,9 +346,11 @@ export async function searchProspects(input: SearchInput): Promise<SearchOutput>
     detailsCalls += 1;
     try {
       const details = await fetchPlaceDetails({ id: prospect.placeId }, input);
-      if (hasWebsite(details)) {
+      const website = details.websiteUri?.trim() || prospect.website;
+      if (!matchesWebsiteFilter(website, websiteFilter)) {
         collected.delete(prospect.placeId);
-        skippedWithWebsite += 1;
+        if (website) skippedWithWebsite += 1;
+        else skippedWithoutWebsite += 1;
         continue;
       }
       const enriched = toProspect(
@@ -342,7 +360,7 @@ export async function searchProspects(input: SearchInput): Promise<SearchOutput>
           formattedAddress: prospect.address,
           nationalPhoneNumber: details.nationalPhoneNumber,
           internationalPhoneNumber: details.internationalPhoneNumber,
-          websiteUri: details.websiteUri,
+          websiteUri: website ?? undefined,
           rating: prospect.rating ?? undefined,
           userRatingCount: prospect.reviews,
           googleMapsUri: prospect.mapsUrl,
@@ -372,6 +390,8 @@ export async function searchProspects(input: SearchInput): Promise<SearchOutput>
     limit: config.places.maxProspects,
     scanned,
     skippedWithWebsite,
+    skippedWithoutWebsite,
+    websiteFilter,
     totalQualified: prospects.length,
     pagesScanned,
     capped: capped || prospects.length >= config.places.maxProspects,
