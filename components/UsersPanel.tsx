@@ -176,7 +176,9 @@ export default function UsersPanel({
                     <span className={`role-badge role-${user.role.toLowerCase()}`}>{ROLE_LABELS[user.role]}</span>
                   </td>
                   <td data-label="Status">
-                    <span className={user.isActive ? 'dot-live' : 'wa-none'}>{user.isActive ? 'Aktif' : 'Nonaktif'}</span>
+                    <span className={`status-badge ${user.isActive ? 'is-positive' : 'is-negative'}`}>
+                      {user.isActive ? 'Aktif' : 'Nonaktif'}
+                    </span>
                   </td>
                   <td data-label="Lead">{user.leads ?? 0}</td>
                   <td data-label="Aksi">

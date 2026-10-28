@@ -165,7 +165,7 @@ export default function UsagePanel({ initialOverview }: { initialOverview: Usage
                     {log.placeId ? <span className="cell-sub mono">{log.placeId}</span> : null}
                   </td>
                   <td data-label="Status">
-                    <span className={log.status === 'SUCCESS' ? 'dot-live' : 'wa-none'}>
+                    <span className={`status-badge ${log.status === 'SUCCESS' ? 'is-positive' : 'is-negative'}`}>
                       {log.status === 'SUCCESS' ? 'Sukses' : `Gagal${log.httpStatus ? ` (${log.httpStatus})` : ''}`}
                     </span>
                   </td>

@@ -1811,6 +1811,33 @@
   border-color: rgba(31, 107, 69, 0.22);
 }
 
+/* Badge status (Sukses / Aktif / Gagal / Nonaktif).
+   Geometri sengaja identik dengan .role-badge supaya tinggi & padding
+   sejajar saat berada di baris tabel yang sama. */
+.status-badge {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-badge.is-positive {
+  background: #ecfdf5; /* emerald-50 */
+  border-color: #a7f3d0; /* emerald-200 */
+  color: #047857; /* emerald-700 */
+}
+
+.status-badge.is-negative {
+  background: #fff1f2; /* rose-50 */
+  border-color: #fecdd3; /* rose-200 */
+  color: #be123c; /* rose-700 */
+}
+
 .cat-layout {
   display: grid;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
