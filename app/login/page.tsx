@@ -26,7 +26,7 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <div>
+        <div className="auth-copy">
           <h2 className="auth-headline">
             Temukan bisnis yang <span>belum punya website</span>.
           </h2>
@@ -49,8 +49,6 @@ export default async function LoginPage({
             </li>
           </ul>
         </div>
-
-        <div className="auth-foot">API key Google Places tetap di server — tidak pernah dikirim ke browser.</div>
       </aside>
 
       <main className="auth-main">
