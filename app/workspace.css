@@ -967,6 +967,9 @@
     flex-wrap: wrap;
     border-radius: 12px;
   }
+  .topbar-logout {
+    order: 2;
+  }
   .stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1531,12 +1534,53 @@
 }
 
 .topbar-logout {
-  color: rgba(255, 255, 255, 0.85) !important;
-  border-color: rgba(255, 255, 255, 0.24) !important;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
 }
 
 .topbar-logout:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffd7d2;
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(255, 120, 110, 0.5);
+}
+
+.topbar-logout:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.topbar-logout:focus-visible {
+  outline: 2px solid rgba(120, 170, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.topbar-logout:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.topbar-logout-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: topbar-logout-spin 700ms linear infinite;
+}
+
+@keyframes topbar-logout-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .app-topbar .user-menu {
