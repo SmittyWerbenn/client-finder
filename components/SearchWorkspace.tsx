@@ -217,6 +217,34 @@ export default function SearchWorkspace({
 
         <div className="search-body">
           <div className="search-grid">
+            {tab === 'category' ? (
+              <label className="field search-field">
+                <span className="field-label">Kategori prospek</span>
+                <select className="select" value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
+                  {categories.length === 0 ? <option value="">Belum ada kategori</option> : null}
+                  {categories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.sector} — {item.subCategory}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label className="field search-field">
+                <span className="field-label">Nama usaha / brand</span>
+                <input
+                  className="input"
+                  value={nameQuery}
+                  onChange={(event) => setNameQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') void runSearch();
+                  }}
+                  placeholder="mis. Kopi Kenangan"
+                  maxLength={80}
+                />
+              </label>
+            )}
+
             <label className="field search-field">
               <span className="field-label">Provinsi</span>
               <select
@@ -254,40 +282,12 @@ export default function SearchWorkspace({
                 ))}
               </select>
             </label>
-
-            {tab === 'category' ? (
-              <label className="field search-field">
-                <span className="field-label">Kategori prospek</span>
-                <select className="select" value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                  {categories.length === 0 ? <option value="">Belum ada kategori</option> : null}
-                  {categories.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.sector} — {item.subCategory}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <label className="field search-field">
-                <span className="field-label">Nama usaha / brand</span>
-                <input
-                  className="input"
-                  value={nameQuery}
-                  onChange={(event) => setNameQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') void runSearch();
-                  }}
-                  placeholder="mis. Kopi Kenangan"
-                  maxLength={80}
-                />
-              </label>
-            )}
           </div>
 
           <p className="search-hint">
             {tab === 'category'
-              ? 'Sistem memindai semua usaha di kategori ini pada kota terpilih.'
-              : 'Tulis nama atau brand lalu tekan Enter. Minimal 2 karakter.'}
+              ? 'Pilih kategori, lalu provinsi dan kota. Sistem memindai semua usaha di kategori ini pada kota terpilih.'
+              : 'Tulis nama atau brand, lalu pilih provinsi dan kota. Minimal 2 karakter.'}
           </p>
 
           <div className="filter-row">
