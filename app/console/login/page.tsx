@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import LoginForm from '@/components/LoginForm';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
@@ -11,9 +12,9 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (await verifySessionToken(token)) redirect('/dashboard');
+  if (await verifySessionToken(token)) redirect('/console');
   const requestedNext = (await searchParams).next;
-  const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard';
+  const nextPath = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/console';
 
   return (
     <div className="auth-shell">
@@ -61,10 +62,22 @@ export default async function LoginPage({
             </div>
           </div>
 
-          <h1>Masuk ke dashboard</h1>
+          <h1>Masuk ke console</h1>
           <p className="hint">Gunakan email dan password akun yang diberikan oleh Superadmin.</p>
 
           <LoginForm nextPath={nextPath} />
+
+          <p style={{ marginTop: 20, fontSize: 13, color: 'var(--slate-500)', textAlign: 'center' }}>
+            Belum punya akses?{' '}
+            <Link href="/console?mode=demo" style={{ fontWeight: 600 }}>
+              Coba demo gratis
+            </Link>{' '}
+            atau{' '}
+            <a href="https://wa.me/6285782846851?text=Halo%20Admin%2C%20saya%20ingin%20tanya%20paket%20ClientFinder." target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>
+              hubungi admin
+            </a>
+            .
+          </p>
         </div>
       </main>
     </div>

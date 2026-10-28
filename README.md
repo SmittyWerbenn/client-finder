@@ -115,15 +115,23 @@ Lihat `.env.example` untuk daftar lengkap.
 ```
 app/
   api/                auth, search, leads, categories, admin, export, health
-  dashboard/          layout RBAC + halaman search/leads/categories/users/api-usage
-  login/              halaman login email+password
-components/           AppShell, SearchWorkspace, ProspectTable, BroadcastModal,
+  page.tsx            public landing page (hero, fitur, kategori, pricing, FAQ)
+  console/            console operasional + login
+    (shell)/          layout RBAC + halaman search/leads/categories/users/api-usage
+    login/            halaman login email+password
+  landing.css         stylesheet landing page (prefix .lnd)
+components/
+  landing/            Navbar, Hero, Features, Niches, Pricing, CustomCallout, Faq, Footer
+  AppShell, SearchWorkspace, ProspectTable, BroadcastModal,
                       LeadsManager, CategoriesPanel, UsersPanel, UsagePanel
 lib/
   db/                 schema SQLite & Postgres, adapter, migrator, seed
   repositories/       aturan bisnis + ownership lead/kategori/user
   api-tracker.ts      atomic hit logger + metrik
   places.ts           pipeline Google Places
+  demo-data.ts        fixture 18 leads untuk mode demo read-only
+  demo-api.ts         mock API client saat cookie `cf_demo` aktif
+  site.ts             identitas komersial + tautan WhatsApp admin
   auth.ts / session.ts / roles.ts
 drizzle/
   sqlite/             migrasi SQLite

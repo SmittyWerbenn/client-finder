@@ -1,5 +1,7 @@
 'use client';
 
+import { demoApiRequest, isDemoModeClient } from './demo-api';
+
 export type ApiEnvelope<T> =
   | { ok: true; data: T }
   | { ok: false; error: { code: string; message: string; details?: unknown } };
@@ -19,6 +21,20 @@ export class ApiClientError extends Error {
 }
 
 export async function apiFetch<T>(input: string, init?: RequestInit): Promise<T> {
+  if (isDemoModeClient()) {
+    const { status, payload } = demoApiRequest(input, init);
+    if (status >= 400 || !payload.ok) {
+      const error = payload.ok ? null : payload.error;
+      throw new ApiClientError(
+        status,
+        error?.code ?? 'UNKNOWN',
+        error?.message ?? 'Permintaan gagal.',
+        error?.details,
+      );
+    }
+    return payload.data as T;
+  }
+
   const response = await fetch(input, {
     cache: 'no-store',
     ...init,

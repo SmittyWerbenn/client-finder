@@ -104,10 +104,10 @@ res = await request('/api/leads', {
   body: { name: 'Manual User', city: 'Bandung' },
 });
 ok(res.status === 403, 'user dilarang menambah lead manual (403)');
-res = await request('/dashboard/users', { token: userToken });
-ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('denied=1'), 'user diarahkan keluar dari /dashboard/users');
-res = await request('/dashboard/api-usage', { token: userToken });
-ok([307, 308].includes(res.status), 'user diarahkan keluar dari /dashboard/api-usage');
+res = await request('/console/users', { token: userToken });
+ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('denied=1'), 'user diarahkan keluar dari /console/users');
+res = await request('/console/api-usage', { token: userToken });
+ok([307, 308].includes(res.status), 'user diarahkan keluar dari /console/api-usage');
 
 res = await request('/api/categories', { token: userToken });
 ok(res.status === 200 && res.json.data.categories.length === 0, 'user tidak melihat kategori global', `${res.json.data.categories.length}`);
@@ -216,7 +216,23 @@ res = await request('/api/auth/logout', { token: userToken, method: 'POST' });
 ok(res.status === 200, 'logout sukses');
 res = await request('/api/auth/me', { token: userToken });
 ok(res.status === 401, 'sesi lama tidak valid setelah logout');
+res = await request('/console');
+ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/console/login'), 'halaman console diproteksi');
+
+// Landing page publik & URL lama
+res = await request('/');
+ok(res.status === 200 && res.text.includes('Temukan Ribuan Calon Klien Bisnis Lokal'), 'landing page publik dapat diakses tanpa login');
 res = await request('/dashboard');
-ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/login'), 'halaman dashboard diproteksi');
+ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/console'), '/dashboard dialihkan permanen ke /console');
+res = await request('/login');
+ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/console/login'), '/login dialihkan permanen ke /console/login');
+
+// Mode demo: tanpa login, cookie demo ditanam, API tetap tertutup
+res = await request('/console?mode=demo', { redirect: 'manual' });
+ok(res.status === 200 && res.text.includes('Demo Interaktif ClientFinder'), 'console demo read-only terbuka tanpa login');
+const demoCookie = res.headers.getSetCookie().find((cookie) => cookie.startsWith('cf_demo=1'));
+ok(Boolean(demoCookie), 'cookie demo ditanam pada navigasi dokumen');
+res = await request('/api/search', { method: 'POST', body: { mode: 'category', categoryId: 'padel-futsal-badminton', city: 'Kota Bandung' }, token: demoCookie?.split(';')[0] });
+ok(res.status === 401, 'API asli tetap menolak request tanpa sesi walau mode demo aktif');
 
 console.log(`\n${passed} assertion lulus`);

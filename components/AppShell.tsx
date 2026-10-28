@@ -13,16 +13,19 @@ type NavItem = {
   label: string;
   icon: string;
   visible: boolean;
-  hint?: string;
 };
+
+const DEMO_QUERY = '?mode=demo';
 
 export default function AppShell({
   user,
   usage,
+  demo = false,
   children,
 }: {
   user: SessionUser;
   usage: UsageSnapshot;
+  demo?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -35,21 +38,22 @@ export default function AppShell({
   }, [pathname]);
 
   const nav: NavItem[] = [
-    { href: '/dashboard', label: 'Pencarian Prospek', icon: '⌕', visible: true },
-    { href: '/dashboard/leads', label: 'Database Leads', icon: '▤', visible: isAdmin(user.role) },
-    { href: '/dashboard/categories', label: 'Kategori & Pitch', icon: '◇', visible: true },
-    { href: '/dashboard/api-usage', label: 'API Usage Metrics', icon: '▦', visible: isAdmin(user.role) },
-    { href: '/dashboard/users', label: 'Manajemen User', icon: '☷', visible: user.role === 'SUPERADMIN' },
+    { href: '/console', label: 'Pencarian Prospek', icon: '⌕', visible: true },
+    { href: '/console/leads', label: 'Database Leads', icon: '▤', visible: isAdmin(user.role) },
+    { href: '/console/categories', label: 'Kategori & Pitch', icon: '◇', visible: true },
+    { href: '/console/api-usage', label: 'API Usage Metrics', icon: '▦', visible: isAdmin(user.role) },
+    { href: '/console/users', label: 'Manajemen User', icon: '☷', visible: user.role === 'SUPERADMIN' },
   ];
 
   const current = [...nav].sort((a, b) => b.href.length - a.href.length).find((item) => pathname === item.href) ?? nav[0];
+  const linkTo = (href: string) => (demo ? `${href}${DEMO_QUERY}` : href);
 
   async function logout() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
       await apiFetch('/api/auth/logout', { method: 'POST' });
-      router.replace('/login');
+      router.replace('/console/login');
       router.refresh();
     } finally {
       setLoggingOut(false);
@@ -64,7 +68,7 @@ export default function AppShell({
         <div className="sidebar-brand">
           <div className="brand-mark">CF</div>
           <div>
-            <div className="brand-name">Client Finder</div>
+            <div className="brand-name">ClientFinder</div>
             <div className="brand-sub">Prospect Engine</div>
           </div>
         </div>
@@ -73,9 +77,9 @@ export default function AppShell({
           {nav
             .filter((item) => item.visible)
             .map((item) => {
-              const active = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
+              const active = item.href === '/console' ? pathname === '/console' : pathname.startsWith(item.href);
               return (
-                <Link key={item.href} href={item.href} className={`sidebar-link ${active ? 'active' : ''}`}>
+                <Link key={item.href} href={linkTo(item.href)} className={`sidebar-link ${active ? 'active' : ''}`}>
                   <span className="sidebar-icon" aria-hidden="true">
                     {item.icon}
                   </span>
@@ -98,12 +102,45 @@ export default function AppShell({
           </small>
         </div>
 
-        <div className="sidebar-foot">© {new Date().getFullYear()} Client Finder</div>
+        <div className="sidebar-foot">
+          {demo ? (
+            <Link href="/" className="sidebar-back">
+              ← Kembali ke situs
+            </Link>
+          ) : (
+            <>© {new Date().getFullYear()} ClientFinder</>
+          )}
+        </div>
       </aside>
 
       {open ? <button type="button" className="sidebar-scrim" aria-label="Tutup menu" onClick={() => setOpen(false)} /> : null}
 
       <div className="app-body">
+        {demo ? (
+          <div className="demo-banner" role="status">
+            <span className="demo-banner-icon" aria-hidden="true">
+              ◉
+            </span>
+            <p>
+              Anda sedang melihat <b>Demo Interaktif ClientFinder (Read-Only)</b>. Untuk mulai mencari lead riil dan
+              integrasi WhatsApp live, silakan hubungi admin atau login.
+            </p>
+            <div className="demo-banner-actions">
+              <a
+                className="demo-banner-btn ghost"
+                href="https://wa.me/6285782846851?text=Halo%20Admin%2C%20saya%20sudah%20mencoba%20demo%20ClientFinder%20dan%20ingin%20tanya%20paket%20langganan."
+                target="_blank"
+                rel="noreferrer"
+              >
+                Hubungi Admin
+              </a>
+              <Link className="demo-banner-btn solid" href="/console/login">
+                Login
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         <header className="app-topbar">
           <div className="app-topbar-inner">
             <button type="button" className="top-btn sidebar-toggle" onClick={() => setOpen((value) => !value)} aria-label="Buka menu">
@@ -116,28 +153,46 @@ export default function AppShell({
               <div className="user-meta">
                 <span className="user-name">{user.name}</span>
                 <span className="user-sub">
-                  {ROLE_LABELS[user.role]} · {user.email}
+                  {demo ? 'Mode demo · read-only' : `${ROLE_LABELS[user.role]} · ${user.email}`}
                 </span>
               </div>
             </div>
-            <button
-              type="button"
-              className="topbar-logout"
-              onClick={() => void logout()}
-              disabled={loggingOut}
-              aria-label={loggingOut ? 'Sedang keluar' : 'Keluar'}
-              title={loggingOut ? 'Sedang keluar…' : 'Keluar'}
-            >
-              {loggingOut ? (
-                <span className="topbar-logout-spinner" aria-hidden="true" />
-              ) : (
+            {demo ? (
+              <a
+                className="topbar-logout demo-exit"
+                href="/"
+                title="Keluar dari mode demo"
+                aria-label="Keluar dari mode demo"
+                onClick={() => {
+                  document.cookie = 'cf_demo=; Max-Age=0; Path=/';
+                }}
+              >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M9 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H9" />
                   <path d="M14 8l4 4-4 4" />
                   <path d="M9 12h9" />
                 </svg>
-              )}
-            </button>
+              </a>
+            ) : (
+              <button
+                type="button"
+                className="topbar-logout"
+                onClick={() => void logout()}
+                disabled={loggingOut}
+                aria-label={loggingOut ? 'Sedang keluar' : 'Keluar'}
+                title={loggingOut ? 'Sedang keluar…' : 'Keluar'}
+              >
+                {loggingOut ? (
+                  <span className="topbar-logout-spinner" aria-hidden="true" />
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H9" />
+                    <path d="M14 8l4 4-4 4" />
+                    <path d="M9 12h9" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
         </header>
 

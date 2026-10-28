@@ -1,36 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DEMO_COOKIE, DEMO_COOKIE_MAX_AGE } from '@/lib/demo-cookie';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/session';
 
 /**
- * Proxy (Next.js 16, pengganti `middleware`) — RBAC lapis pertama.
+ * Proxy (Next.js 16, pengganti `middleware`) — routing publik + RBAC lapis pertama.
  *
- * - Halaman: /dashboard/** harus login; /dashboard/users → SUPERADMIN;
- *   /dashboard/leads & /dashboard/api-usage → ADMIN/SUPERADMIN.
- * - API: /api/auth/login publik; endpoint admin diperiksa role di sini,
- *   lalu DIPERIKSA ULANG di route handler (defense in depth, karena role di
- *   JWT bisa basi bila user diubah/dinonaktifkan).
+ * - `/` (landing page), `/console/login`, `/api/auth/login`, `/api/health` publik.
+ * - `/dashboard/**` dan `/login` diarahkan permanen ke `/console/**` & `/console/login`.
+ * - `/console?mode=demo` membuka console read-only tanpa login (cookie `cf_demo`).
+ * - `/console/**` lain wajib sesi; RBAC halaman diperiksa di sini lalu DIPERIKSA
+ *   ULANG di route handler (role di JWT bisa basi bila user diubah).
  */
 
-const PUBLIC_PAGES = new Set(['/login']);
 const PUBLIC_APIS = new Set(['/api/auth/login', '/api/health']);
 
+function redirectLegacy(req: NextRequest, targetPath: string): NextResponse {
+  const url = new URL(targetPath, req.url);
+  url.search = req.nextUrl.search;
+  return NextResponse.redirect(url, 308);
+}
+
 function denyPage(req: NextRequest): NextResponse {
-  const url = new URL('/dashboard', req.url);
+  const url = new URL('/console', req.url);
   url.searchParams.set('denied', '1');
   return NextResponse.redirect(url);
 }
 
+function demoCookie(response: NextResponse, enabled: boolean): NextResponse {
+  if (enabled) {
+    response.cookies.set(DEMO_COOKIE, '1', {
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: DEMO_COOKIE_MAX_AGE,
+    });
+  } else {
+    response.cookies.set(DEMO_COOKIE, '', { httpOnly: false, sameSite: 'lax', path: '/', maxAge: 0 });
+  }
+  return response;
+}
+
 export default async function proxy(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { pathname, searchParams } = req.nextUrl;
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token);
+  const demoParam = searchParams.get('mode') === 'demo';
 
-  if (PUBLIC_PAGES.has(pathname)) {
-    return session ? NextResponse.redirect(new URL('/dashboard', req.url)) : NextResponse.next();
+  // ── Kompatibilitas URL lama ─────────────────────────────────────
+  if (pathname === '/login' || pathname.startsWith('/login/')) {
+    return redirectLegacy(req, '/console/login');
+  }
+  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    return redirectLegacy(req, `/console${pathname.slice('/dashboard'.length)}`);
+  }
+
+  // ── Keluar dari mode demo ───────────────────────────────────────
+  if (pathname.startsWith('/console') && searchParams.get('mode') === 'exit') {
+    return demoCookie(NextResponse.redirect(new URL('/', req.url)), false);
   }
 
   if (PUBLIC_APIS.has(pathname)) return NextResponse.next();
+  if (pathname === '/') return NextResponse.next();
 
+  // ── Halaman login console ───────────────────────────────────────
+  // Catatan: cookie demo JANGAN dihapus di sini. Prefetch Next.js ke tautan
+  // "Login" akan memicu request ini dan bisa mematikan mode demo yang aktif.
+  if (pathname === '/console/login') {
+    if (session) return NextResponse.redirect(new URL('/console', req.url));
+    return NextResponse.next();
+  }
+
+  // ── Tanpa sesi ──────────────────────────────────────────────────
   if (!session) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
@@ -38,21 +78,46 @@ export default async function proxy(req: NextRequest) {
         { status: 401 },
       );
     }
-    const loginUrl = new URL('/login', req.url);
-    if (pathname !== '/') loginUrl.searchParams.set('next', `${pathname}${search}`);
+
+    const demoCookieActive = req.cookies.get(DEMO_COOKIE)?.value === '1';
+    if (pathname.startsWith('/console') && (demoParam || demoCookieActive)) {
+      // Prefetch Next.js (mis. tautan "Coba Demo" di landing) tidak boleh
+      // menanam cookie demo — hanya navigasi dokumen sungguhan.
+      const isPrefetch =
+        req.headers.get('next-router-prefetch') === '1' ||
+        req.headers.get('x-middleware-prefetch') === '1' ||
+        req.headers.get('purpose') === 'prefetch';
+      // Hanya navigasi dokumen yang boleh menanam cookie demo.
+      const fetchDest = req.headers.get('sec-fetch-dest');
+      const isDocument = fetchDest ? fetchDest === 'document' : req.headers.get('rsc') !== '1';
+      if (!demoCookieActive && demoParam && !isPrefetch && isDocument) return demoCookie(NextResponse.next(), true);
+      return NextResponse.next();
+    }
+
+    const loginUrl = new URL('/console/login', req.url);
+    loginUrl.searchParams.set('next', `${pathname}${req.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Sesi aktif tetapi membuka tautan demo → pakai console penuh.
+  if (pathname.startsWith('/console') && demoParam) {
+    return demoCookie(NextResponse.redirect(new URL('/console', req.url)), false);
+  }
+  // Sesi aktif + sisa cookie demo (mis. setelah login) → bersihkan.
+  if (pathname.startsWith('/console') && req.cookies.get(DEMO_COOKIE)?.value === '1') {
+    return demoCookie(NextResponse.next(), false);
   }
 
   const isAdmin = session.role === 'ADMIN' || session.role === 'SUPERADMIN';
 
   // ── Rute halaman ────────────────────────────────────────────────
-  if (pathname === '/dashboard/users' && session.role !== 'SUPERADMIN') {
+  if (pathname === '/console/users' && session.role !== 'SUPERADMIN') {
     return denyPage(req);
   }
   if (
-    (pathname.startsWith('/dashboard/leads') ||
-      pathname.startsWith('/dashboard/api-usage') ||
-      pathname.startsWith('/dashboard/users')) &&
+    (pathname.startsWith('/console/leads') ||
+      pathname.startsWith('/console/api-usage') ||
+      pathname.startsWith('/console/users')) &&
     !isAdmin
   ) {
     return denyPage(req);
@@ -88,5 +153,5 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/:path*'],
+  matcher: ['/', '/login', '/dashboard/:path*', '/console/:path*', '/api/:path*'],
 };

@@ -27,7 +27,7 @@ export default function LoginForm({ nextPath }: { nextPath: string }) {
         body: JSON.stringify({ email, password }),
       });
       const next = nextPath;
-      router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
+      router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/console');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal masuk. Coba lagi.');

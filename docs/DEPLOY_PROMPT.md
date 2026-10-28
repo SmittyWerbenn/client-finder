@@ -56,7 +56,7 @@ menebak domain, IP, atau kredensial.
 - `docker-compose.yml` menjalankan dua service: `db` (postgres:16-alpine, volume
   `pgdata`) dan `app` (build lokal, port `127.0.0.1:3000`).
 - Health check publik: `GET /api/health` → `{"status":"ok","database":"postgres"}`.
-- Login: `/login`. Dashboard: `/dashboard` (butuh sesi cookie httpOnly).
+- Login: `/console/login`. Dashboard: `/console` (butuh sesi cookie httpOnly).
 - Superadmin pertama dibuat dari `SEED_SUPERADMIN_*` saat database kosong.
 
 ### Langkah 0 — Preflight (jangan ubah apa pun)
@@ -233,10 +233,12 @@ diaktifkan dengan SSL/TLS mode **Full (strict)**.
 ### Langkah 7 — Verifikasi end-to-end
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/login          # 200
-curl -sS https://DOMAIN/api/health                                       # {"status":"ok","database":"postgres"}
-curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/dashboard       # 307/302 ke /login
-curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/api/admin/usage # 401
+curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/                 # 200 (landing page publik)
+curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/console/login    # 200
+curl -sS https://DOMAIN/api/health                                        # {"status":"ok","database":"postgres"}
+curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/console          # 307/302 ke /console/login
+curl -sS -o /dev/null -w '%{http_code}\n' 'https://DOMAIN/console?mode=demo' # 200 (demo tanpa login)
+curl -sS -o /dev/null -w '%{http_code}\n' https://DOMAIN/api/admin/usage  # 401
 ```
 
 Uji login Superadmin **tanpa mencetak token**:
@@ -264,7 +266,7 @@ sudo docker compose exec -T db psql -U clientfinder -d clientfinder -c 'select c
 ```
 
 Uji satu pencarian kecil dari UI (ini memakai kuota Google berbayar — lakukan
-hanya setelah user menyetujui), lalu pastikan hit muncul di `/dashboard/api-usage`.
+hanya setelah user menyetujui), lalu pastikan hit muncul di `/console/api-usage`.
 Jangan melakukan pencarian berulang saat verifikasi.
 
 ### Langkah 8 — Operasional

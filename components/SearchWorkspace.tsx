@@ -19,6 +19,7 @@ export default function SearchWorkspace({
   initialUsage,
   templates,
   denied,
+  demo = false,
 }: {
   user: SessionUser;
   initialCategories: Category[];
@@ -26,6 +27,7 @@ export default function SearchWorkspace({
   initialUsage: UsageSnapshot;
   templates: WaTemplate[];
   denied?: boolean;
+  demo?: boolean;
 }) {
   const [categories] = useState(initialCategories);
   const [tab, setTab] = useState<Tab>('category');
@@ -161,10 +163,20 @@ export default function SearchWorkspace({
     <div className="dash">
       <div className="page-head">
         <div>
-          <h1>Pencarian Prospek</h1>
+          <h1>
+            Pencarian Prospek {demo ? <span className="demo-chip">Mode Demo</span> : null}
+          </h1>
           <p>
-            Masuk sebagai <b>{user.name}</b> · filter “tanpa website” selalu aktif · kuota {usage.userHits}/
-            {usage.userLimit} hit bulan {usage.period}
+            {demo ? (
+              <>
+                Data contoh lokal · filter “tanpa website” selalu aktif · kuota demo {usage.userHits}/{usage.userLimit} hit
+              </>
+            ) : (
+              <>
+                Masuk sebagai <b>{user.name}</b> · filter “tanpa website” selalu aktif · kuota {usage.userHits}/
+                {usage.userLimit} hit bulan {usage.period}
+              </>
+            )}
           </p>
         </div>
       </div>

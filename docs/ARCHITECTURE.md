@@ -33,7 +33,7 @@ Router 16), bukan static export.
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ 2. PENCARIAN & API HIT TRACKING                                          │
 │                                                                          │
-│  UI /dashboard ──POST /api/search {mode,categoryId|name,city}──►         │
+│  UI /console ──POST /api/search {mode,categoryId|name,city}──►           │
 │                                                                          │
 │   requireUser() ──► kategori milik user (user-scoped)                    │
 │        │                                                                 │
@@ -71,9 +71,9 @@ Router 16), bukan static export.
 │       ──► LinkedIn X-Ray (Google site:linkedin.com/in …)                 │
 │       ──► Export CSV (server-side, scoped role, ≤1000 baris)             │
 │                                                                          │
-│  Admin/Superadmin ──► /dashboard/leads: tambah/edit/hapus lead           │
-│  Superadmin      ──► /dashboard/users: CRUD user, role, reset password   │
-│  Admin+          ──► /dashboard/api-usage: total hit, per user, log      │
+│  Admin/Superadmin ──► /console/leads: tambah/edit/hapus lead             │
+│  Superadmin      ──► /console/users: CRUD user, role, reset password     │
+│  Admin+          ──► /console/api-usage: total hit, per user, log        │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -105,8 +105,8 @@ dengan `status = ERROR` dan `http_status` yang sesuai.
 | Broadcast WhatsApp | ✅ | ✅ | ✅ |
 | Kategori: lihat | semua | global + miliknya | miliknya |
 | Kategori: CRUD | semua (termasuk global) | miliknya | miliknya |
-| API Usage Metrics (`/dashboard/api-usage`, `/api/admin/usage`) | ✅ | ✅ | ❌ (403) |
-| Manajemen user (`/dashboard/users`, `/api/admin/users`) | ✅ | ❌ (403) | ❌ (403) |
+| API Usage Metrics (`/console/api-usage`, `/api/admin/usage`) | ✅ | ✅ | ❌ (403) |
+| Manajemen user (`/console/users`, `/api/admin/users`) | ✅ | ❌ (403) | ❌ (403) |
 | Menetapkan kategori ke user lain | ✅ | ❌ | ❌ |
 
 Penegakan berlapis:
@@ -266,5 +266,5 @@ request HTTPS (`FORCE_SECURE_COOKIES=true` untuk memaksa).
 | `USER_MONTHLY_HIT_LIMIT` | 500 | Plafon hit role USER/bulan. |
 
 `assertQuota()` dijalankan sebelum pencarian; bila habis → HTTP 429
-`QUOTA_EXCEEDED`. Konsumsi dapat dilihat di `/dashboard/api-usage` dan chip
+`QUOTA_EXCEEDED`. Konsumsi dapat dilihat di `/console/api-usage` dan chip
 sidebar.
