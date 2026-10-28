@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import LeadsManager from '@/components/LeadsManager';
 import { getSessionUser, isAdmin } from '@/lib/auth';
-import { countLeadsByStatus, listLeads } from '@/lib/repositories/leads';
+import { countLeadsByStatus, listLeadCategories, listLeads } from '@/lib/repositories/leads';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,10 @@ export default async function LeadsPage() {
   if (!user) redirect('/login');
   if (!isAdmin(user.role)) redirect('/dashboard?denied=1');
 
-  const [leads, counts] = await Promise.all([listLeads(user, { limit: 500 }), countLeadsByStatus(user)]);
-  return <LeadsManager initialLeads={leads} initialCounts={counts} />;
+  const [leads, counts, categories] = await Promise.all([
+    listLeads(user, { limit: 500 }),
+    countLeadsByStatus(user),
+    listLeadCategories(user),
+  ]);
+  return <LeadsManager initialLeads={leads} initialCounts={counts} initialCategories={categories} />;
 }

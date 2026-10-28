@@ -148,11 +148,15 @@ export type LeadQuery = {
   status?: LeadStatus;
   q?: string;
   ownerId?: string;
+  sector?: string;
+  subCategory?: string;
   limit?: number;
 };
 
-export async function listLeads(user: SessionUser, query: LeadQuery = {}): Promise<Lead[]> {
-  const db = await getDatabase();
+type LeadFilter = { where: string; params: SqlParam[] };
+
+/** Bangun klausa WHERE yang dipakai bersama oleh listLeads, facet, dan hapus massal. */
+function buildLeadFilter(user: SessionUser, query: LeadQuery = {}): LeadFilter {
   const clauses: string[] = [];
   const params: SqlParam[] = [];
 
@@ -167,15 +171,28 @@ export async function listLeads(user: SessionUser, query: LeadQuery = {}): Promi
     clauses.push('l.status = ?');
     params.push(query.status);
   }
+  if (query.sector?.trim()) {
+    clauses.push('l.sector = ?');
+    params.push(query.sector.trim());
+  }
+  if (query.subCategory?.trim()) {
+    clauses.push('l.sub_category = ?');
+    params.push(query.subCategory.trim());
+  }
   if (query.q?.trim()) {
     const term = `%${query.q.trim().toLowerCase()}%`;
     clauses.push('(lower(l.name) LIKE ? OR lower(l.city) LIKE ? OR l.whatsapp LIKE ?)');
     params.push(term, term, `%${query.q.trim()}%`);
   }
 
-  const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+  return { where: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '', params };
+}
+
+export async function listLeads(user: SessionUser, query: LeadQuery = {}): Promise<Lead[]> {
+  const db = await getDatabase();
+  const { where, params } = buildLeadFilter(user, query);
   const limit = Math.min(Math.max(query.limit ?? 300, 1), 1000);
-  params.push(limit);
+  const args = [...params, limit];
 
   const rows = await db.all<LeadRow>(
     `SELECT l.*, u.name AS owner_name
@@ -184,9 +201,66 @@ export async function listLeads(user: SessionUser, query: LeadQuery = {}): Promi
      ${where}
      ORDER BY l.updated_at DESC
      LIMIT ?`,
-    params,
+    args,
   );
   return rows.map(serialize);
+}
+
+export type LeadCategoryFacet = { sector: string; subCategory: string; total: number };
+
+/** Daftar kombinasi sektor + sub-kategori yang tersimpan, dipakai untuk filter kategori di UI. */
+export async function listLeadCategories(user: SessionUser): Promise<LeadCategoryFacet[]> {
+  const db = await getDatabase();
+  const rows = await db.all<{ sector: string | null; sub_category: string | null; total: unknown }>(
+    `SELECT l.sector AS sector, l.sub_category AS sub_category, COUNT(*) AS total
+     FROM client_leads l
+     ${isAdmin(user.role) ? '' : 'WHERE l.owner_id = ?'}
+     GROUP BY l.sector, l.sub_category
+     ORDER BY l.sector ASC, l.sub_category ASC`,
+    isAdmin(user.role) ? [] : [user.id],
+  );
+
+  return rows.map((row) => ({
+    sector: row.sector?.trim() || 'Tanpa sektor',
+    subCategory: row.sub_category?.trim() || 'Tanpa sub-kategori',
+    total: normalizeNumber(row.total),
+  }));
+}
+
+/**
+ * Hapus massal berdasarkan filter aktif. Wajib ada minimal satu filter agar
+ * tidak menghapus seluruh database karena klik tombol tanpa memilih apa pun.
+ */
+export async function deleteLeadsByFilter(
+  actor: SessionUser,
+  query: LeadQuery = {},
+): Promise<number> {
+  if (!isAdmin(actor.role)) throw forbidden('Hanya Admin yang dapat menghapus lead.');
+  const hasFilter = Boolean(query.status || query.sector?.trim() || query.subCategory?.trim() || query.q?.trim());
+  if (!hasFilter) throw badRequest('Pilih minimal satu filter sebelum menghapus.');
+
+  const db = await getDatabase();
+  const { where, params } = buildLeadFilter(actor, {
+    status: query.status,
+    sector: query.sector,
+    subCategory: query.subCategory,
+    q: query.q,
+    ownerId: query.ownerId,
+  });
+  if (!where) throw badRequest('Filter tidak valid.');
+
+  const counted = await db.all<{ total: unknown }>(
+    `SELECT COUNT(*) AS total FROM client_leads l ${where}`,
+    params,
+  );
+  const total = normalizeNumber(counted[0]?.total);
+  if (total === 0) return 0;
+
+  await db.run(
+    `DELETE FROM client_leads WHERE id IN (SELECT l.id FROM client_leads l ${where})`,
+    params,
+  );
+  return total;
 }
 
 export async function getLead(user: SessionUser, id: string): Promise<Lead> {

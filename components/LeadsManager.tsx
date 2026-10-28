@@ -16,6 +16,10 @@ type Form = {
   status: LeadStatus;
 };
 
+type CategoryFacet = { sector: string; subCategory: string; total: number };
+
+const categoryKey = (sector: string, subCategory: string) => `${sector}||${subCategory}`;
+
 const EMPTY: Form = {
   name: '',
   city: '',
@@ -43,37 +47,67 @@ function leadToForm(lead: Lead): Form {
 export default function LeadsManager({
   initialLeads,
   initialCounts,
+  initialCategories,
 }: {
   initialLeads: Lead[];
   initialCounts: Record<LeadStatus | 'all', number>;
+  initialCategories: CategoryFacet[];
 }) {
   const [leads, setLeads] = useState(initialLeads);
   const [counts, setCounts] = useState(initialCounts);
+  const [categories, setCategories] = useState(initialCategories);
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [query, setQuery] = useState('');
   const [form, setForm] = useState<Form>(EMPTY);
   const [editing, setEditing] = useState<Lead | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const [filterSector, filterSubCategory] = useMemo(() => {
+    if (!categoryFilter) return ['', ''];
+    const [sector, subCategory] = categoryFilter.split('||');
+    return [sector ?? '', subCategory ?? ''];
+  }, [categoryFilter]);
+
+  const categoryGroups = useMemo(() => {
+    const groups = new Map<string, CategoryFacet[]>();
+    for (const facet of categories) {
+      const list = groups.get(facet.sector) ?? [];
+      list.push(facet);
+      groups.set(facet.sector, list);
+    }
+    return [...groups.entries()];
+  }, [categories]);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     return leads.filter((lead) => {
       if (statusFilter !== 'all' && lead.status !== statusFilter) return false;
+      if (filterSector && (lead.sector || 'Tanpa sektor') !== filterSector) return false;
+      if (filterSubCategory && (lead.subCategory || 'Tanpa sub-kategori') !== filterSubCategory) return false;
       if (!term) return true;
       return [lead.name, lead.city, lead.whatsapp, lead.ownerName]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term));
     });
-  }, [leads, statusFilter, query]);
+  }, [leads, statusFilter, filterSector, filterSubCategory, query]);
+
+  const hasFilter = statusFilter !== 'all' || Boolean(categoryFilter) || Boolean(query.trim());
 
   async function refresh() {
-    const payload = await apiFetch<{ leads: Lead[]; counts: Record<LeadStatus | 'all', number> }>('/api/leads');
+    const payload = await apiFetch<{
+      leads: Lead[];
+      counts: Record<LeadStatus | 'all', number>;
+      categories: CategoryFacet[];
+    }>('/api/leads');
     setLeads(payload.leads);
     setCounts(payload.counts);
+    if (payload.categories) setCategories(payload.categories);
   }
 
   function flash(message: string, isError = false) {
@@ -157,6 +191,36 @@ export default function LeadsManager({
     }
   }
 
+  async function removeByFilter() {
+    if (!hasFilter || bulkBusy) return;
+    const parts: string[] = [];
+    if (statusFilter !== 'all') parts.push(`status ${statusFilter}`);
+    if (filterSubCategory) parts.push(`kategori ${filterSubCategory}`);
+    if (query.trim()) parts.push(`kata kunci "${query.trim()}"`);
+    const scope = parts.length > 0 ? parts.join(', ') : 'semua lead';
+
+    if (!window.confirm(`Hapus semua lead dengan filter: ${scope}?\n\nTindakan ini permanen dan tidak bisa dibatalkan.`)) return;
+
+    setBulkBusy(true);
+    try {
+      const payload = await apiFetch<{ deleted: number }>('/api/leads', {
+        method: 'DELETE',
+        body: JSON.stringify({
+          status: statusFilter === 'all' ? undefined : statusFilter,
+          sector: filterSector || undefined,
+          subCategory: filterSubCategory || undefined,
+          q: query.trim() || undefined,
+        }),
+      });
+      flash(payload.deleted > 0 ? `${payload.deleted} lead dihapus sesuai filter.` : 'Tidak ada lead yang cocok dengan filter.');
+      await refresh();
+    } catch (err) {
+      flash(err instanceof Error ? err.message : 'Gagal menghapus lead.', true);
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   function startCreate() {
     setEditing(null);
     setForm(EMPTY);
@@ -213,12 +277,29 @@ export default function LeadsManager({
             ))}
           </div>
           <form
-            className="inline-search"
+            className="inline-search lead-filters"
             onSubmit={(event) => {
               event.preventDefault();
               void refresh().catch((err: unknown) => flash(err instanceof Error ? err.message : 'Gagal memuat.', true));
             }}
           >
+            <select
+              className="select select-compact"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              aria-label="Filter kategori"
+            >
+              <option value="">Semua kategori</option>
+              {categoryGroups.map(([sector, items]) => (
+                <optgroup key={sector} label={sector}>
+                  {items.map((facet) => (
+                    <option key={categoryKey(facet.sector, facet.subCategory)} value={categoryKey(facet.sector, facet.subCategory)}>
+                      {facet.subCategory} ({facet.total})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
             <input
               className="input input-compact"
               value={query}
@@ -230,6 +311,32 @@ export default function LeadsManager({
             </button>
           </form>
         </div>
+
+        {hasFilter ? (
+          <div className="lead-filter-bar">
+            <span>
+              Filter aktif: {statusFilter === 'all' ? 'semua status' : `status ${statusFilter}`}
+              {filterSubCategory ? ` · ${filterSubCategory}` : ''}
+              {query.trim() ? ` · "${query.trim()}"` : ''} — <b>{visible.length}</b> lead tampil
+            </span>
+            <div className="lead-filter-actions">
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setCategoryFilter('');
+                  setQuery('');
+                }}
+              >
+                Reset filter
+              </button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => void removeByFilter()} disabled={bulkBusy}>
+                {bulkBusy ? 'Menghapus…' : `Hapus sesuai filter (${visible.length})`}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="table-wrap">
           <table className="prospects">
@@ -300,8 +407,12 @@ export default function LeadsManager({
         {visible.length === 0 ? (
           <div className="empty-state">
             <div className="icon">▤</div>
-            <h3>Belum ada lead</h3>
-            <p>Jalankan pencarian prospek atau tambahkan lead manual.</p>
+            <h3>{hasFilter ? 'Tidak ada lead pada filter ini' : 'Belum ada lead'}</h3>
+            <p>
+              {hasFilter
+                ? 'Ubah atau reset filter untuk melihat lead lain.'
+                : 'Jalankan pencarian prospek atau tambahkan lead manual.'}
+            </p>
           </div>
         ) : (
           <div className="table-toolbar">
