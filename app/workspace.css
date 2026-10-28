@@ -2172,4 +2172,14 @@
 
 .demo-exit {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.topbar-logout svg {
+  display: block;
+  flex: none;
+  margin: 0;
 }
