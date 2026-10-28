@@ -9,7 +9,7 @@ const LINKS = [
   { href: '#skenario', label: 'Skenario' },
   { href: '#kategori', label: 'Kategori Bisnis' },
   { href: '#harga', label: 'Harga Lisensi' },
-  { href: '#custom', label: 'Custom System' },
+  { href: '#custom', label: 'Custom Engine' },
   { href: '#faq', label: 'FAQ' },
 ];
 

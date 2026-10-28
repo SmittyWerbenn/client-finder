@@ -35,11 +35,11 @@ export default function Footer() {
 
         <nav className="lnd-footer-col" aria-label="Navigasi perusahaan">
           <h4>Layanan</h4>
-          <a href="#custom">Custom System</a>
+          <a href="#custom">Custom Engine</a>
           <a href="#faq">FAQ</a>
           <Link href="/console/login">Masuk Console</Link>
-          <a href={waLink(WA_MESSAGES.customProject)} target="_blank" rel="noreferrer">
-            Diskusi Proyek
+          <a href={waLink(WA_MESSAGES.customEngine)} target="_blank" rel="noreferrer">
+            Konsultasi Engine
           </a>
         </nav>
       </div>

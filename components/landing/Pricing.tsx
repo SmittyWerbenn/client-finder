@@ -47,19 +47,20 @@ const PLANS: Plan[] = [
     featured: true,
   },
   {
-    name: 'ENTERPRISE & CUSTOM SYSTEM',
-    tagline: 'Untuk tim sales, konsultan, atau kebutuhan white-label.',
+    name: 'ENTERPRISE & CUSTOM ENGINE',
+    tagline: 'Untuk tim sales besar, agensi, atau kebutuhan private deployment.',
     price: 'Kustom',
     priceNote: 'Sesuai kebutuhan',
     quota: 'Kuota fleksibel / unlimited via dedicated API key',
     features: [
       'Kategori usaha & kota tanpa batas',
-      'Pembuatan website atau sistem kustom (ERP, POS, Custom Web) untuk klien Anda',
-      'Integrasi CRM, WhatsApp Gateway, atau Webhook khusus',
+      'Multi-source prospecting data di luar Google Maps',
+      'Integrasi otomatis ke CRM internal, webhook, atau WhatsApp gateway perusahaan',
+      'Private deployment (on-premise / private cloud) dengan isolasi database',
       'Konsultasi teknis langsung dengan tim engineer',
     ],
-    cta: 'Konsultasi Kebutuhan Kustom',
-    href: waLink(WA_MESSAGES.custom),
+    cta: 'Konsultasi Custom Engine',
+    href: waLink(WA_MESSAGES.customEngine),
   },
 ];
 

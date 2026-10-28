@@ -15,8 +15,8 @@ export function waLink(message: string): string {
 export const WA_MESSAGES = {
   starter: 'Halo Admin, saya mau order paket Starter ClientFinder (Rp 199rb).',
   pro: 'Halo Admin, saya mau order paket Agency Pro ClientFinder (Rp 499rb).',
-  custom: 'Halo Admin, saya tertarik dengan layanan kustom sistem dan paket Enterprise ClientFinder.',
+  customEngine:
+    'Halo Admin, saya tertarik untuk kustomisasi ClientFinder Engine khusus kebutuhan perusahaan saya.',
   consult: 'Halo Admin, saya ingin konsultasi dan membeli akses ClientFinder.',
-  customProject: 'Halo Admin, saya ingin diskusi proyek kustom (website / sistem operasional) bersama ClientFinder.',
   demo: 'Halo Admin, saya sudah mencoba demo ClientFinder dan ingin tanya paket langganan.',
 } as const;
