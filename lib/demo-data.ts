@@ -99,6 +99,7 @@ export const DEMO_LEADS: DemoLead[] = SEEDS.map((seed) => {
       ? partnershipPitch(subCategory, seed.city)
       : category?.pitch ?? 'Website profil + katalog digital untuk mempercepat calon pelanggan menghubungi bisnis.',
     status: seed.status,
+    statusUpdatedAt: isoDaysAgo(2, 10, 30),
     source: 'SEARCH',
   };
 });

@@ -8,6 +8,8 @@ export type WaTemplate = {
   id: string;
   name: string;
   body: string;
+  /** Kelompok preset di modal broadcast (mis. Gatekeeper). */
+  category?: string;
 };
 
 export type ProspectFilters = {
@@ -91,10 +93,28 @@ export function fillTemplate(body: string, ctx: TemplateContext): string {
     .replaceAll('{{catalog_url}}', ctx.catalogUrl);
 }
 
+/**
+ * Parser spintax `{Halo|Selamat Siang|Hai}` → satu varian acak.
+ * Hanya grup yang punya pemisah `|` yang diproses, sehingga placeholder
+ * `{{business_name}}` tidak ikut terpotong.
+ */
+export function spinText(input: string, random: () => number = Math.random): string {
+  return input.replace(/\{([^{}]*\|[^{}]*)\}/g, (_match, group: string) => {
+    const options = group.split('|').map((option) => option.trim()).filter(Boolean);
+    if (options.length === 0) return '';
+    return options[Math.min(options.length - 1, Math.floor(random() * options.length))];
+  });
+}
+
+/** Isi placeholder lalu acak spintax — dipakai per penerima agar tiap chat unik. */
+export function renderTemplate(body: string, ctx: TemplateContext, random: () => number = Math.random): string {
+  return spinText(fillTemplate(body, ctx), random);
+}
+
 export function waLink(lead: Prospect, body: string, city: string): string | null {
   const phone = normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw);
   if (!phone) return null;
-  const message = fillTemplate(body, templateContextFor(lead, city));
+  const message = renderTemplate(body, templateContextFor(lead, city));
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 

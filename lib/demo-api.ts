@@ -12,6 +12,9 @@ import {
   demoLeadFacets,
 } from './demo-data';
 import type { Lead, SearchMeta, SearchResponse } from './types';
+import { buildLeadsXlsx, bytesToBase64 } from './xlsx';
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 /**
  * Mock API mode demo.
@@ -107,36 +110,20 @@ function demoSearch(body: Record<string, unknown>): SearchResponse {
   };
 }
 
-function demoExport(body: Record<string, unknown>): { csv: string; fileName: string } {
+function demoExport(body: Record<string, unknown>): { fileBase64: string; fileName: string; mime: string } {
   const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
-  const rows = DEMO_LEADS.filter((lead) => ids.some((id) => id.startsWith(lead.id)));
+  const rows = ids.length
+    ? DEMO_LEADS.filter((lead) => ids.some((id) => id.startsWith(lead.id)))
+    : DEMO_LEADS;
 
-  const header = ['Nama', 'Kota', 'Alamat', 'WhatsApp', 'Website', 'Rating', 'Ulasan', 'Sektor', 'Sub Kategori', 'Status', 'Maps'];
-  const escape = (value: string | number | null) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const lines = [header.join(',')];
-  for (const lead of rows) {
-    lines.push(
-      [
-        lead.name,
-        lead.city ?? '',
-        lead.address,
-        lead.phoneDisplay ?? '',
-        lead.website ?? '',
-        lead.rating ?? '',
-        lead.reviews,
-        lead.sector,
-        lead.subCategory,
-        lead.status,
-        lead.mapsUrl,
-      ]
-        .map(escape)
-        .join(','),
-    );
+  if (rows.length === 0) {
+    return { fileBase64: '', fileName: '', mime: XLSX_MIME };
   }
 
   return {
-    csv: rows.length ? `${lines.join('\r\n')}\r\n` : '',
-    fileName: `demo-prospek-${slug(String(body.city ?? 'sample'))}.csv`,
+    fileBase64: bytesToBase64(buildLeadsXlsx(rows)),
+    fileName: `demo-prospek-${slug(String(body.city ?? rows[0]?.city ?? 'sample'))}.xlsx`,
+    mime: XLSX_MIME,
   };
 }
 

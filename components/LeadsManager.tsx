@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { Lead, LeadStatus } from '@/lib/types';
 import { LEAD_STATUSES } from '@/lib/outreach';
 import { apiFetch } from '@/lib/client-api';
+import { downloadBase64File } from '@/lib/download';
 
 type Form = {
   name: string;
@@ -65,6 +66,7 @@ export default function LeadsManager({
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -108,6 +110,27 @@ export default function LeadsManager({
     setLeads(payload.leads);
     setCounts(payload.counts);
     if (payload.categories) setCategories(payload.categories);
+  }
+
+  async function exportRows() {
+    if (visible.length === 0 || exporting) return;
+    setExporting(true);
+    try {
+      const payload = await apiFetch<{ fileBase64: string; fileName: string; mime: string }>('/api/export', {
+        method: 'POST',
+        body: JSON.stringify({ ids: visible.map((lead) => lead.id) }),
+      });
+      if (!payload.fileBase64) {
+        flash('Tidak ada lead untuk diexport.', true);
+        return;
+      }
+      downloadBase64File(payload.fileBase64, payload.fileName || 'leads.xlsx', payload.mime);
+      flash(`${visible.length} lead diexport ke Excel.`);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : 'Export Excel gagal.', true);
+    } finally {
+      setExporting(false);
+    }
   }
 
   function flash(message: string, isError = false) {
@@ -243,9 +266,9 @@ export default function LeadsManager({
           <p>Kelola seluruh prospek yang tersimpan: profil, status pipeline, dan data kontak.</p>
         </div>
         <div className="head-actions">
-          <a className="btn btn-ghost btn-sm" href={`/api/export${statusFilter === 'all' ? '' : `?status=${statusFilter}`}`}>
-            Export CSV
-          </a>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void exportRows()} disabled={exporting || visible.length === 0}>
+            {exporting ? 'Menyiapkan…' : 'Export Excel'}
+          </button>
           <button type="button" className="btn btn-primary" onClick={startCreate}>
             + Tambah Lead
           </button>

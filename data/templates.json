@@ -1,22 +1,32 @@
 [
   {
+    "id": "tpl-gatekeeper",
+    "name": "[Penembus Gatekeeper] Tanya PIC / Pemilik",
+    "category": "Penembus Gatekeeper",
+    "body": "{Halo|Selamat pagi|Selamat siang} Admin {{business_name}}, salam kenal. Saya (nama Anda) dari (nama bisnis Anda). Kami ada proposal {sinergi|kerja sama bisnis} untuk {{business_name}} di {{city}}. {Boleh minta tolong|Mohon bantuannya} untuk diteruskan ke Bapak/Ibu PIC atau pemilik terkait? {Terima kasih banyak.|Terima kasih atas bantuannya.}"
+  },
+  {
     "id": "tpl-partnership",
     "name": "[Kerja Sama / Partnership] Ajakan Kolaborasi & Sinergi",
-    "body": "Halo tim {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda) di {{city}}. Kami ingin menjajaki sinergi bisnis dengan {{business_name}} — cross-promo, paket bersama, atau kerja sama operasional yang saling menguntungkan. {{pitch_angle}} Apakah ada waktu 10 menit minggu ini untuk diskusi singkat?"
+    "category": "Kerja Sama",
+    "body": "{Halo|Selamat siang|Hai} tim {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda) di {{city}}. Kami ingin menjajaki {sinergi|kolaborasi} bisnis dengan {{business_name}} — cross-promo, paket bersama, atau kerja sama operasional yang saling menguntungkan. {{pitch_angle}} Apakah ada waktu 10 menit minggu ini untuk diskusi singkat?"
   },
   {
     "id": "tpl-supplier",
     "name": "[Supplier / Pasokan] Penawaran Suplai Produk & Bahan Baku",
-    "body": "Halo {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Kami memasok kebutuhan (produk Anda) untuk bisnis seperti {{business_name}} di {{city}} dengan harga grosir dan pengiriman rutin. {{pitch_angle}} Saya bisa kirim price list terbaru di {{catalog_url}}. Mau saya siapkan penawaran untuk kebutuhan bulan ini?"
+    "category": "Supplier",
+    "body": "{Halo|Selamat pagi} {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Kami memasok kebutuhan (produk Anda) untuk bisnis seperti {{business_name}} di {{city}} dengan harga grosir dan pengiriman rutin. {{pitch_angle}} Saya bisa kirim price list terbaru di {{catalog_url}}. {Mau saya siapkan penawaran|Boleh saya kirimkan penawaran} untuk kebutuhan bulan ini?"
   },
   {
     "id": "tpl-service",
     "name": "[Jasa / Agency] Penawaran Layanan Pendukung Bisnis",
-    "body": "Selamat pagi {{business_name}}, saya (nama Anda) dari (nama bisnis Anda). Kami membantu bisnis di {{city}} untuk (layanan Anda: legalitas, akuntansi, periklanan, atau konsultasi). {{pitch_angle}} Profil layanan kami ada di {{catalog_url}}. Apakah bisa dijadwalkan diskusi singkat untuk melihat apakah layanan ini relevan dengan {{business_name}}?"
+    "category": "Jasa",
+    "body": "{Selamat pagi|Selamat siang|Halo} {{business_name}}, saya (nama Anda) dari (nama bisnis Anda). Kami membantu bisnis di {{city}} untuk (layanan Anda: legalitas, akuntansi, periklanan, atau konsultasi). {{pitch_angle}} Profil layanan kami ada di {{catalog_url}}. Apakah bisa dijadwalkan diskusi singkat untuk melihat apakah layanan ini relevan dengan {{business_name}}?"
   },
   {
     "id": "tpl-website",
     "name": "[Digitalisasi / Web] Penawaran Website & Sistem",
-    "body": "Halo {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Saya lihat {{business_name}} di {{city}} belum punya website resmi, jadi calon pelanggan sulit menemukan info produk dan harga. {{pitch_angle}} Kalau berminat, saya kirim contoh portofolio dan katalog di {{catalog_url}}. Boleh saya kirimkan detailnya?"
+    "category": "Digitalisasi",
+    "body": "{Halo|Selamat siang} {{business_name}}! Saya (nama Anda) dari (nama bisnis Anda). Saya lihat {{business_name}} di {{city}} belum punya website resmi, jadi calon pelanggan sulit menemukan info produk dan harga. {{pitch_angle}} Kalau berminat, saya kirim contoh portofolio dan katalog di {{catalog_url}}. {Boleh saya kirimkan detailnya?|Mau saya kirimkan contohnya?}"
   }
 ]

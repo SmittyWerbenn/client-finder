@@ -725,6 +725,16 @@
   max-width: 520px;
 }
 
+.status-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.cell-sub.mine {
+  color: var(--navy-700, #1f3a5f);
+  font-weight: 600;
+}
+
 .pipeline-chips {
   display: flex;
   gap: 6px;

@@ -19,11 +19,13 @@ export type BroadcastSnapshot = {
 export type BroadcastStartInput = {
   leads: Lead[];
   template: WaTemplate;
-  delaySec: number;
+  /** Jeda acak antar chat (detik) — mitigasi anti-spam WhatsApp. */
+  delayMinSec: number;
+  delayMaxSec: number;
   city: string;
 };
 
-type QueueItem = { lead: Lead; url: string };
+type QueueItem = { lead: Lead };
 
 const INITIAL: BroadcastSnapshot = {
   phase: 'idle',
@@ -38,20 +40,25 @@ const INITIAL: BroadcastSnapshot = {
 /**
  * Antrean broadcast WhatsApp di sisi client.
  *
- * Membuka satu tab wa.me per kontak sesuai jeda yang dipilih, memperbarui
- * progress, dan menyediakan pause / resume / stop. Tab dibuka lewat
- * `window.open` — pop-up blocker browser bisa memblokir tab ke-2 dan
- * seterusnya, sehingga jumlah tab yang gagal dihitung di `blocked`.
+ * Membuka satu tab wa.me per kontak dengan jeda acak di antara pengiriman,
+ * memperbarui progress, dan menyediakan pause / resume / stop. Pesan di-render
+ * ulang per penerima sehingga spintax menghasilkan variasi teks yang unik.
+ * Tab dibuka lewat `window.open` — pop-up blocker browser bisa memblokir tab
+ * ke-2 dan seterusnya, sehingga jumlah tab yang gagal dihitung di `blocked`.
  */
 export function useMassBroadcastQueue(handlers: { onSent?: (lead: Lead) => void } = {}) {
   const [snapshot, setSnapshot] = useState<BroadcastSnapshot>(INITIAL);
 
   const onSentRef = useRef(handlers.onSent);
   onSentRef.current = handlers.onSent;
+  const templateRef = useRef<WaTemplate | null>(null);
+  const cityRef = useRef('');
 
   const queueRef = useRef<QueueItem[]>([]);
   const indexRef = useRef(0);
-  const delayRef = useRef(5);
+  const delayMinRef = useRef(5);
+  const delayMaxRef = useRef(15);
+  const nextDelayRef = useRef(5);
   const timerRef = useRef<number | null>(null);
   const tickerRef = useRef<number | null>(null);
   const deadlineRef = useRef(0);
@@ -94,10 +101,19 @@ export function useMassBroadcastQueue(handlers: { onSent?: (lead: Lead) => void 
     setSnapshot((prev) => ({ ...prev, phase, nextIn: 0, elapsed: elapsedNow() }));
   }
 
+  /** Jeda acak 5–15 detik (dapat dikonfigurasi) per pengiriman. */
+  function randomDelay(): number {
+    const min = Math.max(1, delayMinRef.current);
+    const max = Math.max(min, delayMaxRef.current);
+    return min + Math.random() * (max - min);
+  }
+
   function schedule() {
-    deadlineRef.current = Date.now() + delayRef.current * 1000;
-    setSnapshot((prev) => ({ ...prev, nextIn: delayRef.current }));
-    timerRef.current = window.setTimeout(sendNext, delayRef.current * 1000);
+    nextDelayRef.current = randomDelay();
+    const ms = Math.round(nextDelayRef.current * 1000);
+    deadlineRef.current = Date.now() + ms;
+    setSnapshot((prev) => ({ ...prev, nextIn: Math.ceil(nextDelayRef.current) }));
+    timerRef.current = window.setTimeout(sendNext, ms);
   }
 
   function sendNext() {
@@ -110,11 +126,16 @@ export function useMassBroadcastQueue(handlers: { onSent?: (lead: Lead) => void 
       return;
     }
 
+    const template = templateRef.current;
+    const url = template ? waLink(item.lead, template.body, cityRef.current || item.lead.city || '') : null;
+
     let win: Window | null = null;
-    try {
-      win = window.open(item.url, '_blank');
-    } catch {
-      win = null;
+    if (url) {
+      try {
+        win = window.open(url, '_blank');
+      } catch {
+        win = null;
+      }
     }
     if (!win) {
       blockedRef.current += 1;
@@ -136,32 +157,32 @@ export function useMassBroadcastQueue(handlers: { onSent?: (lead: Lead) => void 
       sent: sentRef.current,
       blocked: blockedRef.current,
       currentName: item.lead.name,
-      nextIn: isLast ? 0 : delayRef.current,
+      nextIn: isLast ? 0 : Math.ceil(nextDelayRef.current),
     }));
 
     if (isLast) finish('done');
     else schedule();
   }
 
-  const start = useCallback(({ leads, template, delaySec, city }: BroadcastStartInput) => {
+  const start = useCallback(({ leads, template, delayMinSec, delayMaxSec, city }: BroadcastStartInput) => {
     clearTimers();
 
     const queue: QueueItem[] = [];
     for (const lead of leads) {
-      const phone = normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw);
-      if (!phone) continue;
-      const leadCity = lead.city || city;
-      const url = waLink(lead, template.body, leadCity);
-      if (!url) continue;
-      queue.push({ lead, url });
+      if (!normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw)) continue;
+      queue.push({ lead });
     }
     if (queue.length === 0) return false;
 
+    templateRef.current = template;
+    cityRef.current = city;
     queueRef.current = queue;
     indexRef.current = 0;
     sentRef.current = 0;
     blockedRef.current = 0;
-    delayRef.current = Math.max(1, delaySec);
+    delayMinRef.current = Math.max(1, Math.min(delayMinSec, delayMaxSec));
+    delayMaxRef.current = Math.max(delayMinRef.current, delayMaxSec);
+    nextDelayRef.current = randomDelay();
     startedAtRef.current = Date.now();
     pausedTotalRef.current = 0;
     pauseStartRef.current = 0;

@@ -6,6 +6,7 @@ import type { SessionUser } from '@/lib/auth';
 import { PROVINCES, citiesForProvince, provinceOfCity } from '@/lib/locations';
 import { DEFAULT_FILTERS, WEBSITE_FILTER_OPTIONS, websiteFilterLabel, matchesFilters, type ProspectFilters, type WaTemplate } from '@/lib/outreach';
 import { apiFetch } from '@/lib/client-api';
+import { downloadBase64File } from '@/lib/download';
 import ProspectTable from './ProspectTable';
 
 type Tab = 'category' | 'name';
@@ -152,29 +153,33 @@ export default function SearchWorkspace({
     }
   }
 
+  async function claimOrRelease(id: string, action: 'claim' | 'release') {
+    try {
+      const payload = await apiFetch<{ lead: Lead }>(`/api/leads/${encodeURIComponent(id)}/${action}`, {
+        method: 'POST',
+      });
+      setLeads((current) => current.map((lead) => (lead.id === id ? payload.lead : lead)));
+      notify(action === 'claim' ? 'Lead dikunci untuk Anda.' : 'Kunci lead dilepas.');
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Gagal memperbarui kepemilikan lead.', true);
+    }
+  }
+
   async function exportCsv() {
     if (filteredLeads.length === 0) return;
     try {
-      const payload = await apiFetch<{ csv: string; fileName: string }>('/api/export', {
+      const payload = await apiFetch<{ fileBase64: string; fileName: string; mime: string }>('/api/export', {
         method: 'POST',
         body: JSON.stringify({ ids: filteredLeads.map((lead) => lead.id), city }),
       });
-      if (!payload.csv) {
+      if (!payload.fileBase64) {
         notify('Tidak ada data untuk diexport.', true);
         return;
       }
-      const blob = new Blob([payload.csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = payload.fileName || 'prospek.csv';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      notify(`${filteredLeads.length} prospek diexport ke CSV.`);
+      downloadBase64File(payload.fileBase64, payload.fileName || 'prospek.xlsx', payload.mime);
+      notify(`${filteredLeads.length} prospek diexport ke Excel.`);
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Export CSV gagal.', true);
+      notify(err instanceof Error ? err.message : 'Export Excel gagal.', true);
     }
   }
 
@@ -438,6 +443,9 @@ export default function SearchWorkspace({
         statusFilter={statusFilter}
         onStatusFilter={setStatusFilter}
         onStatusChange={changeStatus}
+        onClaim={(id, action) => void claimOrRelease(id, action)}
+        user={user}
+        demo={demo}
         onExport={() => void exportCsv()}
         notify={notify}
         loading={loading}

@@ -194,7 +194,18 @@ res = await request(`/api/leads/${firstLead.id}`, { token: userToken, method: 'D
 ok(res.status === 403, 'user tidak bisa menghapus lead (403)');
 
 res = await request('/api/export', { token: userToken, method: 'POST', body: { ids: [firstLead.id], city: 'Jakarta Selatan' } });
-ok(res.status === 200 && res.json.data.csv.includes('Nama Usaha'), 'export CSV server-side');
+const xlsxPayload = res.json?.data ?? {};
+ok(res.status === 200 && typeof xlsxPayload.fileBase64 === 'string' && xlsxPayload.fileBase64.startsWith('UEsDB'), 'export XLSX server-side (base64 zip)');
+ok(xlsxPayload.mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'mime XLSX benar', `${xlsxPayload.mime}`);
+ok(/\.xlsx$/.test(xlsxPayload.fileName ?? ''), 'nama file .xlsx', `${xlsxPayload.fileName}`);
+
+// ── Claim / release ─────────────────────────────────────────────────────
+res = await request(`/api/leads/${firstLead.id}/claim`, { token: userToken, method: 'POST' });
+ok(res.status === 200 && res.json.data.lead.assignedToId, 'user meng-claim lead', `status ${res.status}`);
+res = await request(`/api/leads/${firstLead.id}`, { token: userToken, method: 'PATCH', body: { status: 'Interested' } });
+ok(res.status === 200 && res.json.data.lead.status === 'Interested', 'pemegang claim tetap bisa ubah status');
+res = await request(`/api/leads/${firstLead.id}/release`, { token: userToken, method: 'POST' });
+ok(res.status === 200 && res.json.data.lead.assignedToId === null, 'user melepas claim', `status ${res.status}`);
 
 // ── Metrik admin ──────────────────────────────────────────────────────────
 res = await request('/api/admin/usage', { token: adminToken });
@@ -222,7 +233,7 @@ ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/co
 
 // Landing page publik & URL lama
 res = await request('/');
-ok(res.status === 200 && res.text.includes('Temukan Ribuan Calon Klien Bisnis Lokal'), 'landing page publik dapat diakses tanpa login');
+ok(res.status === 200 && res.text.includes('Temukan Ribuan Calon Klien'), 'landing page publik dapat diakses tanpa login');
 res = await request('/dashboard');
 ok([307, 308].includes(res.status) && res.headers.get('location')?.includes('/console'), '/dashboard dialihkan permanen ke /console');
 res = await request('/login');

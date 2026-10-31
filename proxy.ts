@@ -175,7 +175,8 @@ export default async function proxy(req: NextRequest) {
       { status: 403 },
     );
   }
-  if (pathname.startsWith('/api/leads') && (req.method === 'POST' || req.method === 'DELETE') && !isAdmin) {
+  const isClaimRoute = /^\/api\/leads\/[^/]+\/(claim|release)$/.test(pathname);
+  if (pathname.startsWith('/api/leads') && (req.method === 'POST' || req.method === 'DELETE') && !isAdmin && !isClaimRoute) {
     return NextResponse.json(
       { ok: false, error: { code: 'FORBIDDEN', message: 'User tidak boleh menambah/menghapus lead.' } },
       { status: 403 },

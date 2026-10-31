@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Lead, LeadStatus } from '@/lib/types';
-import { fillTemplate, normalizeWaPhone, templateContextFor, type WaTemplate } from '@/lib/outreach';
+import { normalizeWaPhone, renderTemplate, templateContextFor, type WaTemplate } from '@/lib/outreach';
 import { useMassBroadcastQueue } from '@/lib/useMassBroadcastQueue';
 
-const DELAY_OPTIONS = [3, 5, 10];
+const DELAY_MIN = 5;
+const DELAY_MAX = 15;
 
 function formatDuration(totalSeconds: number) {
   const seconds = Math.max(0, Math.round(totalSeconds));
@@ -32,11 +33,22 @@ export default function BroadcastModal({
   notify: (message: string, isError?: boolean) => void;
 }) {
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? '');
-  const [delaySec, setDelaySec] = useState(5);
+  const [preset, setPreset] = useState('all');
 
   const { snapshot, start, pause, resume, stop, reset } = useMassBroadcastQueue({
     onSent: (lead) => onStatusChange(lead.id, 'Contacted', true),
   });
+
+  const presets = useMemo(() => {
+    const groups = new Set<string>();
+    for (const item of templates) if (item.category) groups.add(item.category);
+    return [...groups];
+  }, [templates]);
+
+  const visibleTemplates = useMemo(
+    () => (preset === 'all' ? templates : templates.filter((item) => item.category === preset)),
+    [templates, preset],
+  );
 
   const recipients = useMemo(
     () => rows.filter((lead) => normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw)),
@@ -48,15 +60,15 @@ export default function BroadcastModal({
     [recipients],
   );
 
-  const template = templates.find((item) => item.id === templateId) ?? templates[0] ?? null;
+  const template = visibleTemplates.find((item) => item.id === templateId) ?? visibleTemplates[0] ?? templates[0] ?? null;
   const busy = snapshot.phase === 'running' || snapshot.phase === 'paused';
   const finished = snapshot.phase === 'done' || snapshot.phase === 'stopped';
   const percent = snapshot.total > 0 ? Math.min(100, Math.round((snapshot.sent / snapshot.total) * 100)) : 0;
-  const estimate = formatDuration(recipients.length * delaySec);
+  const estimate = formatDuration((recipients.length * (DELAY_MIN + DELAY_MAX)) / 2);
 
   const preview = useMemo(() => {
     if (!template || recipients.length === 0) return '';
-    return fillTemplate(template.body, templateContextFor(recipients[0], city || recipients[0].city || ''));
+    return renderTemplate(template.body, templateContextFor(recipients[0], city || recipients[0].city || ''));
   }, [template, recipients, city]);
 
   const phaseMessage =
@@ -102,7 +114,7 @@ export default function BroadcastModal({
       notify('Belum ada template pesan untuk dipakai.', true);
       return;
     }
-    const ok = start({ leads: recipients, template, delaySec, city });
+    const ok = start({ leads: recipients, template, delayMinSec: DELAY_MIN, delayMaxSec: DELAY_MAX, city });
     if (!ok) notify('Tidak ada nomor WhatsApp valid di tabel ini.', true);
   }
 
@@ -116,9 +128,9 @@ export default function BroadcastModal({
       <div className="modal modal-broadcast" role="dialog" aria-modal="true" aria-label="Broadcast WhatsApp massal">
         <div className="modal-head">
           <div>
-            <h2>🚀 Broadcast WhatsApp Semua</h2>
+            <h2>Broadcast WhatsApp</h2>
             <p>
-              Kirim penawaran ke {recipients.length} kontak berurutan · {delaySec} dtk jeda
+              Kirim pesan ke {recipients.length} kontak · jeda acak {DELAY_MIN}–{DELAY_MAX} dtk
             </p>
           </div>
           <button type="button" className="modal-close" onClick={requestClose} aria-label="Tutup">
@@ -140,10 +152,33 @@ export default function BroadcastModal({
                 <span className="broadcast-badge">Batch {recipients.length}</span>
               </div>
 
+              {presets.length > 0 ? (
+                <label className="field">
+                  <span>Preset kategori pesan</span>
+                  <select
+                    className="select"
+                    value={preset}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setPreset(next);
+                      const first = templates.find((item) => next === 'all' || item.category === next);
+                      if (first) setTemplateId(first.id);
+                    }}
+                  >
+                    <option value="all">Semua preset</option>
+                    {presets.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
               <label className="field">
                 <span>Template pesan</span>
                 <select className="select" value={template?.id ?? ''} onChange={(event) => setTemplateId(event.target.value)}>
-                  {templates.map((item) => (
+                  {visibleTemplates.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.name}
                     </option>
@@ -158,33 +193,19 @@ export default function BroadcastModal({
                 </div>
               ) : null}
 
-              <label className="field">
-                <span>Jeda antar chat</span>
-                <select
-                  className="select"
-                  value={delaySec}
-                  onChange={(event) => setDelaySec(Number(event.target.value))}
-                >
-                  {DELAY_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option} detik
-                    </option>
-                  ))}
-                </select>
-              </label>
-
               <div className="broadcast-estimate">
                 <span>Estimasi waktu</span>
                 <strong>± {estimate}</strong>
                 <small>
-                  {recipients.length} chat × {delaySec} dtk jeda
+                  {recipients.length} chat · jeda acak {DELAY_MIN}–{DELAY_MAX} dtk per chat
                 </small>
               </div>
 
               <p className="broadcast-hint">
-                <b>Izinkan pop-up</b> untuk <code>wa.me</code> di browser (ikon pop-up di address bar →{' '}
-                <i>Always allow</i>) agar semua tab chat bisa terbuka. Jangan tutup tab ClientFinder selama
-                broadcast berjalan — jeda 3–10 dtk mencegah browser freeze dan pop-up blocker.
+                <b>Anti-blokir WhatsApp:</b> setiap pesan dikirim dengan jeda acak {DELAY_MIN}–{DELAY_MAX} detik
+                dan teks spintax diacak per nomor, jadi tidak ada pesan identik yang dikirim beruntun. Pastikan{' '}
+                <b>pop-up</b> untuk <code>wa.me</code> diizinkan (ikon pop-up di address bar → <i>Always allow</i>)
+                dan jangan tutup tab ClientFinder selama broadcast berjalan.
               </p>
             </>
           ) : (

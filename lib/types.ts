@@ -38,6 +38,12 @@ export type Lead = Prospect & {
   ownerId: string;
   ownerName?: string;
   status: LeadStatus;
+  /** ISO timestamp perubahan status pipeline terakhir. */
+  statusUpdatedAt: string;
+  /** Staf yang sedang menangani lead (claim). */
+  assignedToId?: string | null;
+  assignedToName?: string | null;
+  claimedAt?: string | null;
   source: 'SEARCH' | 'MANUAL';
 };
 

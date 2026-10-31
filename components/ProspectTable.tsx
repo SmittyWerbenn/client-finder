@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Lead, LeadStatus } from '@/lib/types';
+import type { SessionUser } from '@/lib/auth';
 import BroadcastModal from './BroadcastModal';
 import {
   LEAD_STATUSES,
@@ -30,6 +31,9 @@ export default function ProspectTable({
   statusFilter,
   onStatusFilter,
   onStatusChange,
+  onClaim,
+  user,
+  demo = false,
   onExport,
   notify,
   loading,
@@ -43,6 +47,9 @@ export default function ProspectTable({
   statusFilter: LeadStatus | 'all';
   onStatusFilter: (value: LeadStatus | 'all') => void;
   onStatusChange: (id: string, status: LeadStatus, silent?: boolean) => void;
+  onClaim: (id: string, action: 'claim' | 'release') => void;
+  user: SessionUser;
+  demo?: boolean;
   onExport: () => void;
   notify: (message: string, isError?: boolean) => void;
   loading?: boolean;
@@ -52,6 +59,9 @@ export default function ProspectTable({
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const lockedFor = (lead: Lead): boolean =>
+    Boolean(lead.assignedToId) && lead.assignedToId !== user.id && user.role !== 'ADMIN';
 
   const broadcastCount = rows.filter((lead) => normalizeWaPhone(lead.whatsapp ?? lead.phoneRaw)).length;
 
@@ -258,6 +268,8 @@ export default function ProspectTable({
                           className={`status-select st-${row.status.toLowerCase()}`}
                           value={row.status}
                           onChange={(event) => onStatusChange(row.id, event.target.value as LeadStatus)}
+                          disabled={lockedFor(row)}
+                          title={lockedFor(row) ? `Lead dikunci oleh ${row.assignedToName ?? 'staf lain'}` : undefined}
                           aria-label={`Status pipeline ${row.name}`}
                         >
                           {LEAD_STATUSES.map((option) => (
@@ -266,9 +278,24 @@ export default function ProspectTable({
                             </option>
                           ))}
                         </select>
+                        {row.assignedToId ? (
+                          <span className={`cell-sub ${row.assignedToId === user.id ? 'mine' : ''}`}>
+                            {row.assignedToId === user.id ? 'Dipegang Anda' : `Dipegang ${row.assignedToName ?? 'staf lain'}`}
+                          </span>
+                        ) : null}
                       </td>
                       <td data-label="Aksi">
                         <div className="row-actions">
+                          {!demo && row.assignedToId === user.id ? (
+                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => onClaim(row.id, 'release')}>
+                              Lepas
+                            </button>
+                          ) : null}
+                          {!demo && !row.assignedToId && user.role !== 'ADMIN' ? (
+                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => onClaim(row.id, 'claim')}>
+                              Ambil
+                            </button>
+                          ) : null}
                           <div className="wa-split" ref={openMenu === row.id ? menuRef : undefined}>
                             <button
                               type="button"

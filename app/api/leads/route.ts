@@ -18,6 +18,7 @@ const querySchema = z.object({
   ownerId: z.string().trim().min(1).optional(),
   sector: z.string().trim().max(80).optional(),
   subCategory: z.string().trim().max(80).optional(),
+  sort: z.enum(['recent', 'stale']).optional(),
 });
 
 function parseQuery(url: URL) {
@@ -27,6 +28,7 @@ function parseQuery(url: URL) {
     ownerId: url.searchParams.get('ownerId') ?? undefined,
     sector: url.searchParams.get('sector') || undefined,
     subCategory: url.searchParams.get('subCategory') || undefined,
+    sort: url.searchParams.get('sort') || undefined,
   });
 }
 

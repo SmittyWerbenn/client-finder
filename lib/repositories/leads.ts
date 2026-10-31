@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getDatabase, normalizeNumber } from '@/lib/db';
 import type { SqlParam } from '@/lib/db';
 import type { LeadStatus } from '@/lib/db/schema';
-import { badRequest, forbidden, notFound } from '@/lib/errors';
+import { badRequest, conflict, forbidden, notFound } from '@/lib/errors';
 import { normalizePhone } from '@/lib/phone';
 import { isAdmin, type SessionUser } from '@/lib/auth';
 import type { Lead, Prospect } from '@/lib/types';
@@ -28,10 +28,21 @@ type LeadRow = {
   sub_category: string;
   pitch: string;
   status: string;
+  status_updated_at: unknown;
+  assigned_to_id: string | null;
+  assigned_to_name: string | null;
+  claimed_at: unknown;
   source: string;
   created_at: unknown;
   updated_at: unknown;
 };
+
+function toIso(value: unknown, fallback?: unknown): string {
+  const raw = value ?? fallback;
+  const ms = Number(raw);
+  if (!Number.isFinite(ms) || ms <= 0) return new Date(0).toISOString();
+  return new Date(ms).toISOString();
+}
 
 function serialize(row: LeadRow): Lead {
   return {
@@ -53,6 +64,10 @@ function serialize(row: LeadRow): Lead {
     subCategory: String(row.sub_category),
     pitch: String(row.pitch),
     status: String(row.status) as LeadStatus,
+    statusUpdatedAt: toIso(row.status_updated_at, row.updated_at),
+    assignedToId: row.assigned_to_id ?? null,
+    assignedToName: row.assigned_to_name ?? null,
+    claimedAt: row.claimed_at === null || row.claimed_at === undefined ? null : toIso(row.claimed_at),
     source: String(row.source) === 'MANUAL' ? 'MANUAL' : 'SEARCH',
   };
 }
@@ -87,8 +102,8 @@ export async function saveSearchLeads(
     prospects.map((lead) => ({
       sql: `INSERT INTO client_leads
               (id, owner_id, place_id, name, address, city, phone_raw, phone_display, whatsapp, website,
-               rating, reviews, maps_url, sector, sub_category, pitch, status, source, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'New', 'SEARCH', ?, ?)
+               rating, reviews, maps_url, sector, sub_category, pitch, status, status_updated_at, source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'New', ?, 'SEARCH', ?, ?)
             ON CONFLICT (owner_id, place_id) DO UPDATE SET
               name = excluded.name,
               address = excluded.address,
@@ -123,6 +138,7 @@ export async function saveSearchLeads(
         lead.pitch,
         now,
         now,
+        now,
       ],
     })),
   );
@@ -150,6 +166,8 @@ export type LeadQuery = {
   ownerId?: string;
   sector?: string;
   subCategory?: string;
+  /** recent = terbaru diperbarui, stale = paling lama tidak dihubungi. */
+  sort?: 'recent' | 'stale';
   limit?: number;
 };
 
@@ -193,13 +211,14 @@ export async function listLeads(user: SessionUser, query: LeadQuery = {}): Promi
   const { where, params } = buildLeadFilter(user, query);
   const limit = Math.min(Math.max(query.limit ?? 300, 1), 1000);
   const args = [...params, limit];
+  const order = query.sort === 'stale' ? 'ASC' : 'DESC';
 
   const rows = await db.all<LeadRow>(
     `SELECT l.*, u.name AS owner_name
      FROM client_leads l
      LEFT JOIN users u ON u.id = l.owner_id
      ${where}
-     ORDER BY l.updated_at DESC
+     ORDER BY COALESCE(l.status_updated_at, l.updated_at) ${order}, l.updated_at DESC
      LIMIT ?`,
     args,
   );
@@ -270,13 +289,85 @@ export async function getLead(user: SessionUser, id: string): Promise<Lead> {
   return serialize(row);
 }
 
+function rowStatusUpdatedAt(row: LeadRow): number {
+  const value = Number(row.status_updated_at ?? row.updated_at);
+  return Number.isFinite(value) && value > 0 ? value : Date.now();
+}
+
+/** Lead terkunci hanya untuk staf yang meng-claim; Admin/Superadmin selalu boleh. */
+function assertClaimAccess(actor: SessionUser, row: LeadRow, action: string): void {
+  if (isAdmin(actor.role)) return;
+  if (!row.assigned_to_id || row.assigned_to_id === actor.id) return;
+  throw conflict(`Lead sedang dihandle oleh ${row.assigned_to_name ?? 'staf lain'}. ${action} dikunci.`);
+}
+
 export async function updateLeadStatus(user: SessionUser, id: string, status: LeadStatus): Promise<Lead> {
   const db = await getDatabase();
   const row = await findLeadRow(id);
   if (!row) throw notFound('Lead tidak ditemukan.');
   if (!isAdmin(user.role) && row.owner_id !== user.id) throw forbidden('Lead ini bukan milik akun Anda.');
+  assertClaimAccess(user, row, 'Perubahan status');
 
-  await db.run('UPDATE client_leads SET status = ?, updated_at = ? WHERE id = ?', [status, Date.now(), id]);
+  const now = Date.now();
+  const changed = row.status !== status;
+  const autoClaim = !row.assigned_to_id;
+
+  if (autoClaim) {
+    await db.run(
+      `UPDATE client_leads
+       SET status = ?, status_updated_at = ?, assigned_to_id = ?, assigned_to_name = ?, claimed_at = ?, updated_at = ?
+       WHERE id = ?`,
+      [status, changed ? now : rowStatusUpdatedAt(row), user.id, user.name, now, now, id],
+    );
+  } else {
+    await db.run('UPDATE client_leads SET status = ?, status_updated_at = ?, updated_at = ? WHERE id = ?', [
+      status,
+      changed ? now : rowStatusUpdatedAt(row),
+      now,
+      id,
+    ]);
+  }
+
+  const updated = await findLeadRow(id);
+  if (!updated) throw notFound('Lead tidak ditemukan.');
+  return serialize(updated);
+}
+
+/** Claim manual: kunci lead ke staf yang sedang menanganinya. */
+export async function claimLead(actor: SessionUser, id: string): Promise<Lead> {
+  const db = await getDatabase();
+  const row = await findLeadRow(id);
+  if (!row) throw notFound('Lead tidak ditemukan.');
+  if (!isAdmin(actor.role) && row.owner_id !== actor.id) throw forbidden('Lead ini bukan milik akun Anda.');
+
+  if (row.assigned_to_id === actor.id) return serialize(row);
+  if (row.assigned_to_id && !isAdmin(actor.role)) {
+    throw conflict(`Lead sudah di-claim oleh ${row.assigned_to_name ?? 'staf lain'}.`);
+  }
+
+  const now = Date.now();
+  await db.run(
+    'UPDATE client_leads SET assigned_to_id = ?, assigned_to_name = ?, claimed_at = ?, updated_at = ? WHERE id = ?',
+    [actor.id, actor.name, now, now, id],
+  );
+  const updated = await findLeadRow(id);
+  if (!updated) throw notFound('Lead tidak ditemukan.');
+  return serialize(updated);
+}
+
+/** Lepas claim — hanya staf pemegang atau Admin. */
+export async function releaseLead(actor: SessionUser, id: string): Promise<Lead> {
+  const db = await getDatabase();
+  const row = await findLeadRow(id);
+  if (!row) throw notFound('Lead tidak ditemukan.');
+  if (!isAdmin(actor.role) && row.assigned_to_id !== actor.id) {
+    throw forbidden('Hanya staf yang meng-claim lead ini yang dapat melepasnya.');
+  }
+
+  await db.run(
+    'UPDATE client_leads SET assigned_to_id = NULL, assigned_to_name = NULL, claimed_at = NULL, updated_at = ? WHERE id = ?',
+    [Date.now(), id],
+  );
   const updated = await findLeadRow(id);
   if (!updated) throw notFound('Lead tidak ditemukan.');
   return serialize(updated);
@@ -285,7 +376,8 @@ export async function updateLeadStatus(user: SessionUser, id: string, status: Le
 export async function updateLeadDetails(user: SessionUser, id: string, input: LeadUpdateInput): Promise<Lead> {
   if (!isAdmin(user.role)) throw forbidden('Hanya Admin yang dapat mengubah profil lead.');
   const db = await getDatabase();
-  if (!(await findLeadRow(id))) throw notFound('Lead tidak ditemukan.');
+  const existing = await findLeadRow(id);
+  if (!existing) throw notFound('Lead tidak ditemukan.');
 
   const phone = input.phone === undefined ? null : normalizePhone(input.phone);
   if (input.phone !== undefined && input.phone.trim() !== '' && !phone) {
@@ -307,7 +399,10 @@ export async function updateLeadDetails(user: SessionUser, id: string, input: Le
   if (input.pitch !== undefined) push('pitch', input.pitch);
   if (input.website !== undefined) push('website', input.website || null);
   if (input.mapsUrl !== undefined) push('maps_url', input.mapsUrl);
-  if (input.status !== undefined) push('status', input.status);
+  if (input.status !== undefined) {
+    push('status', input.status);
+    if (input.status !== existing.status) push('status_updated_at', Date.now());
+  }
   if (input.phone !== undefined) {
     push('phone_raw', phone?.raw ?? null);
     push('phone_display', phone?.display ?? null);
@@ -342,8 +437,8 @@ export async function createManualLead(actor: SessionUser, input: LeadCreateInpu
   await db.run(
     `INSERT INTO client_leads
        (id, owner_id, place_id, name, address, city, phone_raw, phone_display, whatsapp, website,
-        rating, reviews, maps_url, sector, sub_category, pitch, status, source, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, ?, ?, ?, 'MANUAL', ?, ?)`,
+        rating, reviews, maps_url, sector, sub_category, pitch, status, status_updated_at, source, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, ?, ?, ?, ?, ?, ?, 'MANUAL', ?, ?)`,
     [
       id,
       ownerId,
@@ -360,6 +455,7 @@ export async function createManualLead(actor: SessionUser, input: LeadCreateInpu
       input.subCategory || 'Input manual',
       input.pitch,
       input.status,
+      now,
       now,
       now,
     ],

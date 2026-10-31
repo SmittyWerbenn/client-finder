@@ -71,6 +71,12 @@ export const clientLeads = sqliteTable(
     subCategory: text('sub_category').notNull(),
     pitch: text('pitch').notNull(),
     status: text('status').$type<LeadStatus>().notNull().default('New'),
+    /** Waktu status pipeline terakhir berubah — dasar sortir follow-up. */
+    statusUpdatedAt: integer('status_updated_at', { mode: 'timestamp_ms' }).notNull(),
+    /** Staf yang meng-claim lead (kunci kolisi antar sales). */
+    assignedToId: text('assigned_to_id').references(() => users.id, { onDelete: 'set null' }),
+    assignedToName: text('assigned_to_name'),
+    claimedAt: integer('claimed_at', { mode: 'timestamp_ms' }),
     source: text('source').$type<'SEARCH' | 'MANUAL'>().notNull().default('SEARCH'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
