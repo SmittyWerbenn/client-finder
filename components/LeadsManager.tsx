@@ -362,7 +362,15 @@ export default function LeadsManager({
         ) : null}
 
         <div className="table-wrap">
-          <table className="prospects">
+          <table className="prospects prospects--leads">
+            <colgroup>
+              <col className="col-biz" />
+              <col className="col-owner" />
+              <col className="col-contact" />
+              <col className="col-city" />
+              <col className="col-status" />
+              <col className="col-aksi" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Bisnis</th>

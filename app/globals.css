@@ -657,6 +657,94 @@ table.prospects tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* Lebar kolom eksplisit: Bisnis selalu paling lebar */
+table.prospects--search {
+  table-layout: fixed;
+  min-width: 1180px;
+}
+
+table.prospects--search .col-biz {
+  width: 30%;
+}
+table.prospects--search .col-web {
+  width: 7%;
+}
+table.prospects--search .col-cat {
+  width: 12%;
+}
+table.prospects--search .col-rating {
+  width: 7%;
+}
+table.prospects--search .col-contact {
+  width: 11%;
+}
+table.prospects--search .col-pitch {
+  width: 10%;
+}
+table.prospects--search .col-status {
+  width: 9%;
+}
+table.prospects--search .col-aksi {
+  width: 14%;
+}
+
+table.prospects--leads {
+  table-layout: fixed;
+  min-width: 1000px;
+}
+
+table.prospects--leads .col-biz {
+  width: 36%;
+}
+table.prospects--leads .col-owner {
+  width: 15%;
+}
+table.prospects--leads .col-contact {
+  width: 17%;
+}
+table.prospects--leads .col-city {
+  width: 11%;
+}
+table.prospects--leads .col-status {
+  width: 10%;
+}
+table.prospects--leads .col-aksi {
+  width: 12%;
+}
+
+table.prospects--search th,
+table.prospects--search td,
+table.prospects--leads th,
+table.prospects--leads td {
+  overflow-wrap: anywhere;
+}
+
+/* Chip kategori & badge di dalam tabel boleh turun baris agar tidak meluber */
+table.prospects .chip,
+table.prospects .badge,
+table.prospects .status-select,
+table.prospects .cell-sub {
+  max-width: 100%;
+}
+
+table.prospects .chip,
+table.prospects .badge,
+table.prospects .web-badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 620px) {
+  table.prospects--search,
+  table.prospects--leads {
+    table-layout: auto;
+    min-width: 0;
+  }
+  table.prospects colgroup {
+    display: none;
+  }
+}
+
 .biz-name {
   font-weight: 650;
   color: var(--navy-900);
@@ -712,11 +800,16 @@ table.prospects tbody tr:last-child td {
 }
 
 .pitch-cell {
-  min-width: 260px;
-  max-width: 340px;
+  min-width: 0;
+  max-width: 100%;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--slate-700);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
 }
 
 .wa-link {
